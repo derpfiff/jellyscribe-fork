@@ -8,6 +8,14 @@
     "category": "General",
     "versions": [
       {
+        "version": "2.15.0.125",
+        "changelog": "Siehe CHANGES-JELLYFIN-12.4.md.",
+        "targetAbi": "12.4.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/derpfiff/jellyscribe-fork/main/dist/jellyscribe-fork_2.15.0.125.zip",
+        "checksum": "c877e191df49eca70dc7196fb28dd77d",
+        "timestamp": "2026-11-15T14:28:51Z"
+      },
+      {
         "version": "2.15.0.124",
         "changelog": "Siehe CHANGES-JELLYFIN-12.4.md.",
         "targetAbi": "12.4.0.0",
