@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Jellyscribe</AssemblyName>
     <RootNamespace>LetterboxdSync</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>2.15.0.0</AssemblyVersion>
-    <FileVersion>2.15.0.0</FileVersion>
+    <AssemblyVersion>2.15.0.124</AssemblyVersion>
+    <FileVersion>2.15.0.124</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,17 +17,17 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
-    <!-- FLOOR POLICY: Jellyfin assemblies carry full per-patch AssemblyVersions, so the
-         SDK version we compile against IS the minimum Jellyfin a release can load on
-         (strict binding; proven live on 10.11.10 with a 10.11.11-built DLL, issue #63).
-         These MUST equal targetAbi.txt and only move together, deliberately, when we
-         need a newer API - never via a routine dependency bump. CI enforces the match. -->
-    <PackageReference Include="Jellyfin.Controller" Version="10.11.9" />
-    <PackageReference Include="Jellyfin.Model" Version="10.11.9" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <!-- Encrypts stored secrets (Letterboxd password/cookies, Seerr API key) at rest.
-         See LetterboxdSync/Security/SecretProtector.cs for the threat model. -->
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="9.0.0" />
+    <!-- Jellyfin 12.4 fork: built against the server's own assemblies (copied to ../lib from a
+         Jellyfin 12.4 install) instead of the 10.11 NuGet packages. DataProtection comes with the
+         ASP.NET Core shared framework that Jellyfin already loads. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Reference Include="MediaBrowser.Common"><HintPath>../lib/MediaBrowser.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="MediaBrowser.Controller"><HintPath>../lib/MediaBrowser.Controller.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="MediaBrowser.Model"><HintPath>../lib/MediaBrowser.Model.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Jellyfin.Data"><HintPath>../lib/Jellyfin.Data.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Jellyfin.Database.Implementations"><HintPath>../lib/Jellyfin.Database.Implementations.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Jellyfin.Extensions"><HintPath>../lib/Jellyfin.Extensions.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>../lib/Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 
   <ItemGroup>

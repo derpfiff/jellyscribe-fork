@@ -21,9 +21,17 @@ public class ServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<Serializd.SerializdSyncRunner>();
         serviceCollection.AddSingleton<Serializd.SerializdWatchlistSyncRunner>();
         serviceCollection.AddSingleton<Serializd.SerializdDiaryImportRunner>();
-        serviceCollection.AddHostedService<PlaybackHandler>();
-        serviceCollection.AddHostedService<RatingSyncHandler>();
-        serviceCollection.AddHostedService<RepositoryMigrationService>();
+        // Fork: no automatic posting. PlaybackHandler (logs films/episodes when playback ends) and
+        // RatingSyncHandler (pushes rating changes) are not registered; the user logs each film
+        // explicitly through LetterboxdLogController, and queued entries are retried by
+        // LetterboxdLogRetryService.
+        // serviceCollection.AddHostedService<PlaybackHandler>();
+        // serviceCollection.AddHostedService<RatingSyncHandler>();
+        serviceCollection.AddSingleton<LetterboxdLog.LetterboxdLogService>();
+        serviceCollection.AddHostedService<LetterboxdLog.LetterboxdLogRetryService>();
+        // Fork: not registered. Upstream adds its own plugin repository to the server's catalog,
+        // which would offer upstream builds as "updates" that replace this Jellyfin 12.4 fork.
+        // serviceCollection.AddHostedService<RepositoryMigrationService>();
         serviceCollection.AddHostedService<UserIdentityService>();
 
         // Adds the sidebar link to the web client without the File Transformation plugin.

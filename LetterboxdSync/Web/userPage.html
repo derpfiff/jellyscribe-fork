@@ -9,6 +9,9 @@
         <div data-role="content">
             <div class="content-primary">
                 <style>
+                    /* 12.4-Fork: automatisches Übertragen ist aus – Einträge entstehen nur über Cinema Glass („Bewerten & loggen“) */
+                    #runSyncBtn, #firstRun, #syncStatus { display: none !important; }
+
                 /* User-page-only rules; the shared styles and the bundled fonts are in jellyscribe.css. */
                 #letterboxdUserPage { --ws-rail-w: 240px; --ws-main-x: 32px; --ws-filters-gap: 12px; }
                 #letterboxdUserPage .ws-back { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--ws-faint); font-weight: 500; font-size: 13px; text-decoration: none; cursor: pointer; transition: .13s; }
@@ -36,7 +39,7 @@
                     </aside>
                     <main class="ws-main">
                         <section class="ws-view show" data-sec="overview">
-                            <div class="ws-head"><div><h1>Your diaries</h1><p>What we've logged from your watching, across both accounts.</p></div>
+                            <div class="ws-head"><div><h1>Your diaries</h1><p>Entries you logged in Cinema Glass (“Rate &amp; log”). Nothing is sent automatically.</p></div>
                                 <div style="display:flex;gap:8px;"><button type="button" class="ws-btn" id="runWatchlistBtn">Sync all watchlists</button><button type="button" class="ws-btn primary" id="runSyncBtn">Sync all now</button></div></div>
                             <div class="ws-panel ws-firstrun" id="firstRun" role="region" aria-labelledby="firstRunTitle" hidden>
                                 <div><b id="firstRunTitle"></b><p class="ws-muted" id="firstRunText"></p></div>

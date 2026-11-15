@@ -438,6 +438,92 @@ public class LetterboxdApiClient : ILetterboxdService
             throw new Exception($"Letterboxd rejected rating {rating} for {filmSlug}: {error}");
     }
 
+    // ---- Fork (LetterboxdLog): explicit diary entries confirmed by the user in the client ----
+
+    /// <summary>The member's diary entry for the film on that day, or null. Throws on a failed read.</summary>
+    public async Task<string?> FindLogEntryIdOnDateAsync(string filmId, DateTime date, CancellationToken cancellationToken = default)
+    {
+        EnsureAuthenticated();
+        var response = await SendSignedAsync(HttpMethod.Get, "/log-entries",
+            queryParams: $"member={Uri.EscapeDataString(_memberId)}&film={Uri.EscapeDataString(filmId)}&perPage=100&sort=WhenAdded",
+            authenticated: true, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new LetterboxdLogHttpException(response.StatusCode, $"Could not read the Letterboxd diary: {(int)response.StatusCode}");
+
+        var want = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+        foreach (var item in doc.RootElement.GetProperty("items").EnumerateArray())
+        {
+            if (item.TryGetProperty("diaryDetails", out var d) && d.TryGetProperty("diaryDate", out var dd)
+                && string.Equals(dd.GetString(), want, StringComparison.Ordinal)
+                && item.TryGetProperty("id", out var id))
+                return id.GetString();
+        }
+
+        return null;
+    }
+
+    internal static Dictionary<string, object?> BuildLogEntryBody(string? filmId, DateTime date, double? rating, bool liked,
+        string? review, bool containsSpoilers, bool rewatch, bool forUpdate)
+    {
+        var body = new Dictionary<string, object?>();
+        if (filmId != null)
+            body["filmId"] = filmId;
+        body["diaryDetails"] = new Dictionary<string, object>
+        {
+            ["diaryDate"] = date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["rewatch"] = rewatch
+        };
+        body["like"] = liked;
+        if (!forUpdate)
+            body["tags"] = Array.Empty<string>();
+        // On an update, null removes a rating that was set before.
+        if (rating.HasValue || forUpdate)
+            body["rating"] = rating;
+        if (!string.IsNullOrWhiteSpace(review))
+            body["review"] = new Dictionary<string, object> { ["text"] = review!, ["containsSpoilers"] = containsSpoilers };
+        return body;
+    }
+
+    /// <summary>POST /log-entries. Returns the new entry's id when the reply carries one.</summary>
+    public async Task<string?> CreateLogEntryAsync(string filmId, DateTime date, double? rating, bool liked,
+        string? review, bool containsSpoilers, bool rewatch)
+    {
+        EnsureAuthenticated();
+        var body = JsonSerializer.Serialize(BuildLogEntryBody(filmId, date, rating, liked, review, containsSpoilers, rewatch, forUpdate: false));
+        // A POST is never cancelled half way: a write that went out must be read back.
+        var response = await SendSignedAsync(HttpMethod.Post, "/log-entries", body, "application/json", authenticated: true)
+            .ConfigureAwait(false);
+        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new LetterboxdLogHttpException(response.StatusCode, $"Letterboxd refused the diary entry: {(int)response.StatusCode}");
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("id", out var id) ? id.GetString() : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>PATCH /log-entry/{id}: date, rewatch, like, rating (null clears it) and review.</summary>
+    public async Task UpdateLogEntryAsync(string entryId, DateTime date, double? rating, bool liked,
+        string? review, bool containsSpoilers, bool rewatch)
+    {
+        EnsureAuthenticated();
+        var body = JsonSerializer.Serialize(BuildLogEntryBody(null, date, rating, liked, review, containsSpoilers, rewatch, forUpdate: true));
+        var response = await SendSignedAsync(HttpMethod.Patch, $"/log-entry/{Uri.EscapeDataString(entryId)}", body, "application/json",
+            authenticated: true).ConfigureAwait(false);
+        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+            throw new LetterboxdLogHttpException(response.StatusCode, $"Letterboxd refused the diary update: {(int)response.StatusCode}");
+        var error = ExtractRelationshipUpdateError(json);
+        if (error != null)
+            throw new LetterboxdLogHttpException(HttpStatusCode.BadRequest, $"Letterboxd refused the diary update: {LetterboxdHttpClient.Truncate(error, 200)}");
+    }
+
     /// <summary>
     /// First Error-type entry in a FilmRelationshipUpdateResponse's messages, as "code: title",
     /// or null when the update was accepted.

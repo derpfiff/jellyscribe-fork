@@ -77,6 +77,15 @@ public class SerializdSyncRunner
 
     public async Task RunForAllAsync(IProgress<double> progress, string source, CancellationToken cancellationToken)
     {
+        // Fork: automatic posting of played films is switched off for good. Films reach the
+        // diary only through POST /LetterboxdLog/Entry (the user confirms each log).
+        if (AutoSyncDisabled.Value)
+        {
+            _logger.LogInformation("Automatic {What} sync is disabled in this build; nothing is posted", "Serializd");
+            progress?.Report(100);
+            return;
+        }
+
         if (!await SerializdSyncGate.Instance.WaitAsync(0, cancellationToken).ConfigureAwait(false))
         {
             _logger.LogWarning("Serializd sync already running, skipping {Source} run", source);
@@ -129,6 +138,12 @@ public class SerializdSyncRunner
     /// <summary>Runs the catch-up for a single Jellyfin user across all their enabled Serializd accounts.</summary>
     public async Task<bool> TryRunForUserAsync(string userJellyfinId, string source, CancellationToken cancellationToken)
     {
+        if (AutoSyncDisabled.Value)
+        {
+            _logger.LogInformation("Automatic {What} sync is disabled in this build; nothing is posted", "Serializd");
+            return false;
+        }
+
         if (!await SerializdSyncGate.Instance.WaitAsync(0, cancellationToken).ConfigureAwait(false))
         {
             _logger.LogWarning("Serializd sync already running, refusing user-triggered start for {UserId}", userJellyfinId);

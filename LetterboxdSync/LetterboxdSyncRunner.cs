@@ -87,6 +87,15 @@ public class LetterboxdSyncRunner
 
     public async Task RunForAllAsync(IProgress<double> progress, string source, CancellationToken cancellationToken)
     {
+        // Fork: automatic posting of played films is switched off for good. Films reach the
+        // diary only through POST /LetterboxdLog/Entry (the user confirms each log).
+        if (AutoSyncDisabled.Value)
+        {
+            _logger.LogInformation("Automatic {What} sync is disabled in this build; nothing is posted", "Letterboxd");
+            progress?.Report(100);
+            return;
+        }
+
         if (!await SyncGate.Instance.WaitAsync(0, cancellationToken).ConfigureAwait(false))
         {
             _logger.LogWarning("Sync already running, skipping scheduled run");
@@ -133,6 +142,12 @@ public class LetterboxdSyncRunner
         CancellationToken cancellationToken,
         string? letterboxdUsername = null)
     {
+        if (AutoSyncDisabled.Value)
+        {
+            _logger.LogInformation("Automatic {What} sync is disabled in this build; nothing is posted", "Letterboxd");
+            return false;
+        }
+
         if (!await SyncGate.Instance.WaitAsync(0, cancellationToken).ConfigureAwait(false))
         {
             _logger.LogWarning("Sync already running, refusing user-triggered start for {UserId}", userJellyfinId);

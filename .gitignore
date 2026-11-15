@@ -31,3 +31,7 @@ worker/.wrangler/
 # Python bytecode from running the release script tests locally.
 __pycache__/
 *.pyc
+out/
+obj/
+bin/
+/lib/

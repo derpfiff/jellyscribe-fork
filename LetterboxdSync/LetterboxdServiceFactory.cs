@@ -74,6 +74,9 @@ public static class LetterboxdServiceFactory
                 // Only a definite answer from the API is worth remembering; a timeout, a 5xx or a
                 // rate limit says nothing about the next attempt.
                 apiRejected = ex is LetterboxdApiAuthException { IsRejection: true };
+                // Fork: with the API pointed at a test server, never fall back to letterboxd.com.
+                if (Environment.GetEnvironmentVariable("JELLYSCRIBE_LETTERBOXD_API_URL") is { Length: > 0 })
+                    throw;
                 logger.LogWarning("Official API auth failed for {Username}, falling back to scraping: {Message}",
                     username, ex.Message);
             }

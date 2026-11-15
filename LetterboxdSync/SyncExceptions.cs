@@ -131,3 +131,14 @@ public static class SyncErrors
         => (int)status >= 500 || status is System.Net.HttpStatusCode.TooManyRequests
             or System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden;
 }
+
+/// <summary>Fork: a Letterboxd API reply with an error status, from the LetterboxdLog calls.</summary>
+public sealed class LetterboxdLogHttpException : Exception
+{
+    public LetterboxdLogHttpException(System.Net.HttpStatusCode statusCode, string message) : base(message)
+    {
+        StatusCode = statusCode;
+    }
+
+    public System.Net.HttpStatusCode StatusCode { get; }
+}

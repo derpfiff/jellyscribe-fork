@@ -1,3 +1,19 @@
+# Jellyscribe – Fork für Jellyfin 12.4
+
+Dieser Fork von [builtbyproxy/jellyfin-plugin-letterboxd](https://github.com/builtbyproxy/jellyfin-plugin-letterboxd) (MIT) läuft auf **Jellyfin 12.4** und arbeitet mit [Cinema Glass](https://github.com/derpfiff/cinema-glass) zusammen:
+
+- **Nichts automatisch:** Abspielen, Bewerten oder der Sync-Knopf schicken nichts an Letterboxd.
+- **Nur bestätigte Einträge:** Cinema Glass fragt nach dem Schauen (oder über „Bewerten & loggen …“) nach Datum, halben Sternen, Herz, Kommentar und „schon mal gesehen“; erst „Speichern“ trägt ins Letterboxd-Tagebuch ein. Spätere Änderungen ändern den vorhandenen Eintrag.
+- **Offline:** Ist Letterboxd nicht erreichbar, wird der Eintrag gespeichert und nachgereicht.
+
+Plugin-Katalog für Jellyfin: `https://raw.githubusercontent.com/derpfiff/jellyscribe-fork/main/manifest.json`
+
+Einrichten: Jellyscribe in der Seitenleiste öffnen, Letterboxd-Konto verknüpfen und einschalten. Details zu den Änderungen: [CHANGES-JELLYFIN-12.4.md](CHANGES-JELLYFIN-12.4.md). Hinweis: Das Plugin nutzt wie das Original dessen eingebaute Zugangsschlüssel für Letterboxds Schnittstelle.
+
+Bauen: `build.sh` (braucht die Jellyfin-12.4-Server-DLLs in `lib/`).
+
+---
+
 # [Jellyscribe](https://jellyscribe.dev/)
 
 [![CI](https://github.com/builtbyproxy/Jellyscribe/actions/workflows/ci.yml/badge.svg)](https://github.com/builtbyproxy/Jellyscribe/actions/workflows/ci.yml)

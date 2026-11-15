@@ -1,0 +1,18 @@
+{
+  "category": "General",
+  "changelog": "Jellyfin 12.4 fork of Jellyscribe 2.15.0: built for Jellyfin 12.4/.NET 10; no automatic posting (play events, rating pushes, scheduled sync disabled); new LetterboxdLog API (Status/Entry/Entries) for explicitly confirmed diary entries with offline queue and update-instead-of-duplicate; no upstream repository injection.",
+  "description": "Syncs Jellyfin watch history to Letterboxd (fork of builtbyproxy/jellyfin-plugin-letterboxd, MIT).",
+  "guid": "c7a3e1b9-5d42-4f8a-9c06-2b7d8e4f1a35",
+  "name": "Jellyscribe",
+  "overview": "Letterboxd diary logging on request (Jellyfin 12.4 fork)",
+  "owner": "builtbyproxy (fork)",
+  "targetAbi": "12.4.0.0",
+  "timestamp": "2026-11-15T00:00:00.0000000Z",
+  "version": "2.15.0.124",
+  "status": "Active",
+  "autoUpdate": false,
+  "assemblies": [
+    "Jellyscribe.dll",
+    "HtmlAgilityPack.dll"
+  ]
+}
