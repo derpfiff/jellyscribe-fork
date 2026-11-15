@@ -99,6 +99,13 @@ public sealed class LetterboxdLogService
 
     public int QueuedCount(string userIdN) => Load(userIdN).Count(r => r.State == "queued");
 
+    /// <summary>Entry counts of one user by state, for the admin overview.</summary>
+    public (int Queued, int Posted, int Errors) Counts(string userIdN)
+    {
+        var all = Load(userIdN);
+        return (all.Count(r => r.State == "queued"), all.Count(r => r.State == "posted"), all.Count(r => r.State == "error"));
+    }
+
     public IReadOnlyList<LogRecord> List(string userIdN) => Load(userIdN);
 
     public async Task<LogResult> SubmitAsync(string userIdN, LogEntryRequest req)

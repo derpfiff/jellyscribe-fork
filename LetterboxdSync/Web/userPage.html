@@ -4,488 +4,209 @@
     <title>Jellyscribe</title>
 </head>
 <body>
-    <div id="letterboxdUserPage" data-role="page" class="page type-interior" style="visibility:hidden;"
-         data-require="emby-input,emby-button,emby-checkbox,emby-select">
+    <!-- Fork: nirgends verlinkt (das Konto wird in Cinema Glass verknüpft). Bleibt als schlichte Ersatzseite
+         unter /web/configurationpage?name=letterboxduser erreichbar. -->
+    <div id="letterboxdUserPage" data-role="page" class="page type-interior" data-require="emby-button">
         <div data-role="content">
             <div class="content-primary">
                 <style>
-                    /* 12.4-Fork: automatisches Übertragen ist aus – Einträge entstehen nur über Cinema Glass („Bewerten & loggen“) */
-                    #runSyncBtn, #firstRun, #syncStatus { display: none !important; }
-
-                /* User-page-only rules; the shared styles and the bundled fonts are in jellyscribe.css. */
-                #letterboxdUserPage { --ws-rail-w: 240px; --ws-main-x: 32px; --ws-filters-gap: 12px; }
-                #letterboxdUserPage .ws-back { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--ws-faint); font-weight: 500; font-size: 13px; text-decoration: none; cursor: pointer; transition: .13s; }
-                #letterboxdUserPage .ws-back:hover { background: var(--ws-surface-2); color: var(--ws-text); }
-                #letterboxdUserPage .ws-back svg { width: 15px; height: 15px; flex: none; }
-                /* First-run card: no diary linked yet, or linked with nothing logged yet. */
-                #letterboxdUserPage .ws-firstrun { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 20px; margin-bottom: 18px; border-left: 3px solid var(--ws-primary); }
-                #letterboxdUserPage .ws-firstrun[hidden], #letterboxdUserPage .ws-btn[hidden] { display: none; }
-                #letterboxdUserPage .ws-firstrun > div:first-child { min-width: 0; flex: 1 1 280px; }
-                #letterboxdUserPage .ws-firstrun b { display: block; font-size: 15px; margin-bottom: 4px; }
-                #letterboxdUserPage .ws-firstrun p { margin: 0; font-size: 13px; line-height: 1.5; }
+                /* Im Look von Cinema Glass. Alles hängt an der Seitenwurzel, nichts wirkt nach außen. */
+                #letterboxdUserPage .lbx { --lbx-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", system-ui, sans-serif; --lbx-line: inset 0 0 0 1px rgba(255, 255, 255, .12); --lbx-dim: rgba(255, 255, 255, .62);
+                    box-sizing: border-box; max-width: 720px; margin: 0 auto; padding: 36px 40px 80px; color: #fff; font-family: var(--lbx-font); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+                #letterboxdUserPage .lbx *, #letterboxdUserPage .lbx *::before, #letterboxdUserPage .lbx *::after { box-sizing: border-box; }
+                #letterboxdUserPage .lbx [hidden] { display: none !important; }
+                #letterboxdUserPage .lbx-eyebrow { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(255, 255, 255, .5); }
+                #letterboxdUserPage .lbx h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.01em; line-height: 1.15; }
+                #letterboxdUserPage .lbx-intro { margin: 10px 0 0; font-size: 15px; color: var(--lbx-dim); }
+                #letterboxdUserPage .lbx-panel { margin-top: 28px; padding: 24px; border-radius: 24px; background: rgba(32, 32, 36, .82); -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); box-shadow: var(--lbx-line), 0 24px 60px rgba(0, 0, 0, .35); }
+                #letterboxdUserPage .lbx-acct { display: flex; align-items: center; gap: 16px; }
+                #letterboxdUserPage .lbx-avatar { flex: none; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, .1); box-shadow: var(--lbx-line); }
+                #letterboxdUserPage .lbx-avatar svg { width: 28px; height: 28px; fill: #fff; }
+                #letterboxdUserPage .lbx-avatar.is-on { background: #fff; }
+                #letterboxdUserPage .lbx-avatar.is-on svg { fill: #000; }
+                #letterboxdUserPage .lbx-acct__txt { flex: 1; min-width: 0; }
+                #letterboxdUserPage .lbx-acct__name { font-size: 21px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                #letterboxdUserPage .lbx-acct__sub { margin-top: 2px; font-size: 14px; color: var(--lbx-dim); }
+                #letterboxdUserPage .lbx-row { display: flex; align-items: center; gap: 16px; margin-top: 20px; padding: 14px 16px; border-radius: 16px; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); cursor: pointer; }
+                #letterboxdUserPage .lbx-row__txt { flex: 1; min-width: 0; }
+                #letterboxdUserPage .lbx-row__txt b { display: block; font-size: 15.5px; font-weight: 600; }
+                #letterboxdUserPage .lbx-row__txt span { display: block; margin-top: 2px; font-size: 13.5px; color: var(--lbx-dim); }
+                #letterboxdUserPage .lbx-switch { position: relative; flex: none; width: 51px; height: 31px; margin: 0; border: 0; padding: 0; border-radius: 999px; background: rgba(120, 120, 128, .36); cursor: pointer; transition: background .2s ease; -webkit-appearance: none; appearance: none; outline: none; }
+                #letterboxdUserPage .lbx-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
+                #letterboxdUserPage .lbx-switch:checked { background: #fff; }
+                #letterboxdUserPage .lbx-switch:checked::after { transform: translateX(20px); background: #000; }
+                #letterboxdUserPage .lbx-switch:focus-visible { box-shadow: 0 0 0 3px rgba(255, 255, 255, .5); }
+                #letterboxdUserPage .lbx-switch:disabled { opacity: .45; cursor: default; }
+                #letterboxdUserPage .lbx-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; }
+                #letterboxdUserPage .lbx-pill { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 22px; border: 0; border-radius: 999px; font: 600 16px/1 var(--lbx-font); cursor: pointer; white-space: nowrap; background: #fff; color: #000; transition: transform .2s cubic-bezier(.2, .8, .2, 1), background .2s ease; }
+                #letterboxdUserPage .lbx-pill--glass { background: rgba(120, 120, 128, .3); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
+                #letterboxdUserPage .lbx-pill--quiet { background: transparent; color: var(--lbx-dim); padding: 0 12px; }
+                @media (hover: hover) { #letterboxdUserPage .lbx-pill:hover:not(:disabled) { transform: scale(1.03); } #letterboxdUserPage .lbx-pill--glass:hover:not(:disabled) { background: rgba(255, 255, 255, .22); } #letterboxdUserPage .lbx-pill--quiet:hover:not(:disabled) { color: #fff; transform: none; } }
+                #letterboxdUserPage .lbx-pill:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+                #letterboxdUserPage .lbx-pill:disabled { opacity: .45; cursor: default; }
+                #letterboxdUserPage .lbx-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; margin-top: 22px; }
+                #letterboxdUserPage .lbx-label { display: block; margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: rgba(255, 255, 255, .5); }
+                #letterboxdUserPage .lbx-input { display: block; width: 100%; height: 46px; padding: 0 14px; border: 0; border-radius: 12px; background: rgba(255, 255, 255, .08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); color: #fff; font: 400 16px var(--lbx-font); outline: none; }
+                #letterboxdUserPage .lbx-input::placeholder { color: rgba(255, 255, 255, .35); }
+                #letterboxdUserPage .lbx-input:focus { background: rgba(255, 255, 255, .11); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .7); }
+                #letterboxdUserPage .lbx-hint { grid-column: 1 / -1; margin: -4px 0 0; font-size: 12.5px; color: rgba(255, 255, 255, .42); }
+                #letterboxdUserPage .lbx-confirm { margin-top: 16px; padding: 16px; border-radius: 16px; background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); font-size: 14.5px; }
+                #letterboxdUserPage .lbx-confirm .lbx-acts { margin-top: 12px; }
+                #letterboxdUserPage .lbx-msg { margin-top: 14px; font-size: 14px; color: #fff; }
+                #letterboxdUserPage .lbx-msg:empty { display: none; }
+                #letterboxdUserPage .lbx-msg.is-err { padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, .08); box-shadow: inset 3px 0 0 #fff; }
+                #letterboxdUserPage .lbx-ph { display: block; height: 20px; width: 180px; border-radius: 8px; background: rgba(255, 255, 255, .08); }
+                @media (max-width: 700px) {
+                    #letterboxdUserPage .lbx { padding: 22px 16px 64px; }
+                    #letterboxdUserPage .lbx h1 { font-size: 30px; }
+                    #letterboxdUserPage .lbx-panel { margin-top: 22px; padding: 18px; border-radius: 22px; }
+                    #letterboxdUserPage .lbx-form { grid-template-columns: 1fr; }
+                    #letterboxdUserPage .lbx-acts .lbx-pill { flex: 1 1 auto; }
+                }
                 </style>
 
-                <div class="ws">
-                    <aside class="ws-rail">
-                        <div class="ws-rail-inner">
-                        <div class="ws-brand"><span class="ws-glyph"><svg viewBox="0 0 24 24" fill="#14161c"><path d="M7 5h10v14l-5-4.2L7 19z"/></svg></span><div><b>JellyScribe</b><small>Your film &amp; TV diaries</small><small>by <a href="https://lachlanyoung.dev/?utm_source=jellyscribe&utm_medium=plugin&utm_campaign=author-link" target="_blank" rel="author" style="color:inherit;text-decoration:underline;">Lachlan Young</a> and <strong style="color:var(--ws-primary-text);font-weight:650;">AI</strong></small></div></div>
-                        <a class="ws-back" href="/web/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to Jellyfin</a>
-                        <nav class="ws-nav" id="wsNav">
-                            <div class="ws-navlabel">You</div>
-                            <button type="button" class="active" aria-current="page" data-sec="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Overview</button>
-                            <button type="button" data-sec="accounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>My accounts<span class="ws-count" id="acctCount"></span></button>
-                        </nav>
+                <div class="lbx">
+                    <div class="lbx-eyebrow">Letterboxd</div>
+                    <h1 data-t="title">Letterboxd-Konto</h1>
+                    <p class="lbx-intro" data-t="intro">Einträge entstehen nur, wenn du in Cinema Glass „Speichern“ drückst. Nichts wird automatisch übertragen.</p>
+
+                    <section class="lbx-panel" aria-live="polite">
+                        <div class="lbx-acct">
+                            <div class="lbx-avatar" id="lbxAvatar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.3-8 5.2V21h16v-1.8c0-2.9-3.6-5.2-8-5.2Z"/></svg></div>
+                            <div class="lbx-acct__txt"><div class="lbx-acct__name" id="lbxName"><span class="lbx-ph"></span></div><div class="lbx-acct__sub" id="lbxSub"></div></div>
                         </div>
-                    </aside>
-                    <main class="ws-main">
-                        <section class="ws-view show" data-sec="overview">
-                            <div class="ws-head"><div><h1>Your diaries</h1><p>Entries you logged in Cinema Glass (“Rate &amp; log”). Nothing is sent automatically.</p></div>
-                                <div style="display:flex;gap:8px;"><button type="button" class="ws-btn" id="runWatchlistBtn">Sync all watchlists</button><button type="button" class="ws-btn primary" id="runSyncBtn">Sync all now</button></div></div>
-                            <div class="ws-panel ws-firstrun" id="firstRun" role="region" aria-labelledby="firstRunTitle" hidden>
-                                <div><b id="firstRunTitle"></b><p class="ws-muted" id="firstRunText"></p></div>
-                                <div style="display:flex;gap:8px;flex-wrap:wrap;flex:none;"><button type="button" class="ws-btn" id="firstRunAlt" hidden></button><button type="button" class="ws-btn primary" id="firstRunBtn"></button></div>
+
+                        <div id="lbxLinked" hidden>
+                            <label class="lbx-row" for="lbxEnabled">
+                                <span class="lbx-row__txt"><b data-t="logOn">Einträge an Letterboxd senden</b><span data-t="logOnHint">Aus: „Speichern“ bewertet nur noch in Jellyfin.</span></span>
+                                <input type="checkbox" class="lbx-switch" id="lbxEnabled" role="switch" />
+                            </label>
+                            <div class="lbx-acts">
+                                <button type="button" class="lbx-pill lbx-pill--glass" id="lbxEditBtn" data-t="change">Anmeldung ändern</button>
+                                <button type="button" class="lbx-pill lbx-pill--quiet" id="lbxUnlinkBtn" data-t="unlink">Verknüpfung trennen</button>
                             </div>
-                            <div class="ws-filters" id="ovFilters">
-                                <button type="button" class="ws-chip on" data-f="all">All</button>
-                                <button type="button" class="ws-chip" data-f="letterboxd"><span class="ws-dot film"></span>Film</button>
-                                <button type="button" class="ws-chip" data-f="serializd"><span class="ws-dot tv"></span>TV</button>
+                            <div class="lbx-confirm" id="lbxConfirm" hidden>
+                                <span data-t="unlinkQ">Verknüpfung trennen? Die gespeicherte Anmeldung wird vom Server gelöscht. Dein Letterboxd-Tagebuch bleibt unverändert.</span>
+                                <div class="lbx-acts"><button type="button" class="lbx-pill" id="lbxUnlinkYes" data-t="unlinkYes">Trennen</button><button type="button" class="lbx-pill lbx-pill--glass" id="lbxUnlinkNo" data-t="cancel">Abbrechen</button></div>
                             </div>
-                            <span id="syncStatus" class="ws-muted" style="font-size:12.5px;"></span>
-                            <div class="ws-jw" id="jobWatcher" style="display:none;">
-                                <div class="ws-jw-head"><span class="ws-spin" id="jwSpin"></span><b id="jwTitle">Syncing…</b><span class="ws-mono ws-muted ws-jw-elapsed" id="jwElapsed"></span></div>
-                                <div class="ws-muted ws-jw-phase" id="jwPhase"></div>
-                                <div class="ws-jw-bar"><div class="ws-jw-fill" id="jwFill"></div></div>
-                                <div class="ws-muted ws-mono ws-jw-counts" id="jwCounts"></div>
+                        </div>
+
+                        <form id="lbxForm" autocomplete="off" hidden>
+                            <div class="lbx-form">
+                                <div><label class="lbx-label" for="lbxUser" data-t="user">Benutzername</label><input type="text" class="lbx-input" id="lbxUser" autocomplete="username" autocapitalize="none" spellcheck="false" /></div>
+                                <div><label class="lbx-label" for="lbxPass" data-t="pass">Passwort</label><input type="password" class="lbx-input" id="lbxPass" autocomplete="current-password" /></div>
+                                <p class="lbx-hint" data-t="passHint">Wird einmal bei Letterboxd geprüft und dann verschlüsselt auf deinem Jellyfin-Server gespeichert.</p>
                             </div>
-                            <div class="ws-tiles">
-                                <div class="ws-tile film"><div class="n" id="statFilm">-</div><div class="k ws-label">Films logged</div><svg class="ws-spark" id="sparkFilm" viewBox="0 0 120 26" preserveAspectRatio="none"></svg></div>
-                                <div class="ws-tile tv"><div class="n" id="statTv">-</div><div class="k ws-label">Episodes logged</div><svg class="ws-spark" id="sparkTv" viewBox="0 0 120 26" preserveAspectRatio="none"></svg></div>
-                                <div class="ws-tile" style="--ac:var(--ws-primary);"><div class="n" style="color:var(--ws-primary-text);" id="statWatchlist">-</div><div class="k ws-label">On watchlists</div><div class="ws-muted" id="statWatchlistSub" style="font-size:11px;margin-top:4px;"></div></div>
-                                <div class="ws-tile"><div class="n ws-green" id="statSynced">-</div><div class="k ws-label">Synced</div></div>
-                                <div class="ws-tile"><div class="n" style="color:var(--ws-info);" id="statRewatches">-</div><div class="k ws-label">Rewatches</div></div>
-                                <div class="ws-tile"><div class="n ws-red" id="statFailed">-</div><div class="k ws-label">Failed</div></div>
+                            <div class="lbx-acts">
+                                <button type="submit" class="lbx-pill" id="lbxSaveBtn" data-t="link">Verknüpfen</button>
+                                <button type="button" class="lbx-pill lbx-pill--glass" id="lbxCancelBtn" data-t="cancel" hidden>Abbrechen</button>
                             </div>
-                            <div class="ws-sect-title"><h2>Recent activity</h2><span class="rule"></span></div>
-                            <input type="search" class="ws-input" id="historySearch" placeholder="Search titles" aria-label="Search activity by title" autocomplete="off" style="max-width:320px;margin-bottom:10px;" />
-                            <div class="ws-filters" id="ovStatusFilters">
-                                <button type="button" class="ws-chip on" data-s="all">All</button>
-                                <button type="button" class="ws-chip" data-s="hide-skipped">Hide skipped</button>
-                                <button type="button" class="ws-chip" data-s="Success">Synced</button>
-                                <button type="button" class="ws-chip" data-s="Rewatch">Rewatch</button>
-                                <button type="button" class="ws-chip" data-s="Reviewed">Reviewed</button>
-                                <button type="button" class="ws-chip" data-s="Skipped">Skipped</button>
-                                <button type="button" class="ws-chip" data-s="Failed">Failed</button>
-                                <button type="button" class="ws-chip" data-s="Requested">Requested</button>
-                                <button type="button" class="ws-chip" data-s="Rated">Rated</button>
-                            </div>
-                            <div class="ws-panel" style="overflow-x:auto;"><table class="ws-table"><thead><tr><th>Title</th><th>Status</th><th>Source</th><th>When</th><th></th></tr></thead><tbody id="historyBody"><tr><td colspan="5" style="padding:2em;text-align:center;" class="ws-muted">Loading…</td></tr></tbody></table></div>
-                            <div id="historyPagination" style="display:none;margin-top:12px;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;"><button type="button" class="ws-btn" id="historyPrev">‹ Prev</button><span id="historyPageInfo" class="ws-muted ws-mono" style="margin:0 8px;"></span><button type="button" class="ws-btn" id="historyNext">Next ›</button></div>
-                            <div id="historyMoreRow" style="display:none;margin-top:12px;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;"><button type="button" class="ws-btn" id="historyMore">Load older history</button><span id="historyMoreInfo" class="ws-muted ws-mono"></span></div>
-                        </section>
-                        <section class="ws-view" data-sec="accounts">
-                            <div class="ws-head"><div><h1>My accounts</h1><p>Link your Letterboxd (film) and Serializd (TV) accounts. We log what you watch to each.</p></div></div>
-                            <div class="ws-cardgrid" id="acctGrid"></div>
-                            <div id="saveStatus" style="margin-top:12px;font-size:12.5px;"></div>
-                        </section>
-                    </main>
+                        </form>
+                        <div class="lbx-msg" id="lbxMsg" role="status"></div>
+                    </section>
                 </div>
-
-                <dialog class="ws-modal-ov" id="acctModal" aria-labelledby="acctModalTitle"><div class="ws-modal">
-                    <button type="button" class="ws-modal-x" aria-label="Close">&times;</button>
-                    <h3 id="acctModalTitle">Link a diary</h3>
-                    <div class="ws-row"><label class="ws-field" for="mSvc">Service</label><select class="ws-input" id="mSvc"><option value="serializd">Serializd: TV</option><option value="letterboxd">Letterboxd: Film</option></select></div>
-                    <div class="ws-row"><label class="ws-field" id="mUserLabel" for="mUsername">Email or username</label><input type="text" class="ws-input" id="mUsername" autocomplete="off" /></div>
-                    <div class="ws-row"><label class="ws-field" for="mPassword">Password<span class="ws-saved" id="mPasswordSaved" hidden>Saved</span></label><input type="password" class="ws-input" id="mPassword" autocomplete="new-password" /></div>
-                    <!-- NOTE: these ids deliberately avoid the word "cookie". Privacy and
-                         anti-annoyance filter lists (Ghostery, uBlock annoyance lists, AdGuard,
-                         Brave shields) carry generic cosmetic rules like [id*="cookie" i] to kill
-                         consent banners, and they matched this input. The label rendered and the
-                         box did not, so the field looked simply missing, with no console error.
-                         That silently blocks the raw-cookie login path we point Cloudflare- and
-                         2FA-blocked users at, and they have no way to tell it is their extension.
-                         Reported in issue #112. Keep the visible label as "Raw cookies"; only the
-                         attributes need to stay boring. -->
-                    <div class="ws-row" id="mAuthBlobRow" style="display:none;"><label class="ws-field" for="mAuthBlob">Raw cookies <span class="ws-muted" style="text-transform:none;">(recommended for Letterboxd)</span><span class="ws-saved" id="mAuthBlobSaved" hidden>Saved</span></label><input type="text" class="ws-input" id="mAuthBlob" autocomplete="off" placeholder="From a signed-in browser (incl. cf_clearance)" /><label class="ws-muted" id="mAuthBlobClearRow" style="display:none;gap:7px;align-items:center;margin-top:6px;font-size:12.5px;"><input type="checkbox" id="mAuthBlobClear" /> Remove saved cookies</label></div>
-                    <div class="ws-row" id="mUserAgentRow" style="display:none;"><label class="ws-field" for="mUserAgent">User-Agent <span class="ws-muted" style="text-transform:none;">(optional)</span></label><input type="text" class="ws-input" id="mUserAgent" placeholder="Mozilla/5.0 …" /></div>
-                    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;"><button type="button" class="ws-btn" id="mVerifyBtn">Verify login</button><span id="mVerifyStatus" class="ws-muted" style="font-size:12.5px;"></span></div>
-                    <div class="ws-checks" id="mChecks"></div>
-                    <div class="ws-row" id="mWatchNameRow" style="margin-top:12px;"><label class="ws-field" for="mWatchName">Watchlist name <span class="ws-muted" style="text-transform:none;">(optional)</span></label><input type="text" class="ws-input" id="mWatchName" placeholder="" /></div>
-                    <div class="ws-row" id="mLibRow" style="display:none;margin-top:12px;"><span class="ws-field" id="mLibsLabel">Excluded libraries <span class="ws-muted" style="text-transform:none;">(never synced to this account; applies to future syncs)</span></span><div class="ws-checks" id="mLibs" role="group" aria-labelledby="mLibsLabel"></div></div>
-                    <div style="display:flex;gap:10px;margin-top:18px;align-items:center;"><button type="button" class="ws-btn primary" id="mSaveBtn">Save</button><button type="button" class="ws-btn" id="mCancelBtn">Cancel</button><button type="button" class="ws-btn danger" id="mDeleteBtn" style="margin-left:auto;display:none;">Remove</button></div>
-                    <div id="mConfirmRow" style="display:none;margin-top:12px;padding:10px 12px;border:1px solid var(--ws-crit);border-radius:8px;font-size:12.5px;align-items:center;gap:10px;flex-wrap:wrap;"><span>Remove this account? Jellyscribe stops syncing to it. Nothing on the diary itself is deleted.</span><span style="margin-left:auto;display:flex;gap:8px;"><button type="button" class="ws-btn danger" id="mConfirmRemoveBtn">Yes, remove</button><button type="button" class="ws-btn" id="mConfirmKeepBtn">Keep it</button></span></div>
-                    <div id="mStatus" style="font-size:12.5px;margin-top:8px;"></div>
-                </div></dialog>
-
-                <dialog class="ws-modal-ov" id="reviewModal" aria-labelledby="reviewTitle"><div class="ws-modal">
-                    <button type="button" class="ws-modal-x" aria-label="Close">&times;</button>
-                    <h3 id="reviewTitle">Write review</h3>
-                    <textarea id="reviewText" aria-label="Review" rows="4" class="ws-input" placeholder="Write your review…"></textarea>
-                    <div class="ws-row" style="margin-top:12px;"><span class="ws-field" id="ratingField">Rating</span><div id="starRating" role="slider" tabindex="0" aria-labelledby="ratingField" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="No rating"><span class="ws-star" data-val="1">&#9734;<span class="ws-star-on">&#9733;</span></span><span class="ws-star" data-val="2">&#9734;<span class="ws-star-on">&#9733;</span></span><span class="ws-star" data-val="3">&#9734;<span class="ws-star-on">&#9733;</span></span><span class="ws-star" data-val="4">&#9734;<span class="ws-star-on">&#9733;</span></span><span class="ws-star" data-val="5">&#9734;<span class="ws-star-on">&#9733;</span></span><span id="ratingLabel" class="ws-muted" style="margin-left:8px;font-size:12px;">No rating</span></div><input type="hidden" id="reviewRating" value="" /></div>
-                    <label class="ws-muted" style="display:block;margin:8px 0;font-size:12.5px;"><input type="checkbox" id="reviewSpoilers" /> Contains spoilers</label>
-                    <label class="ws-muted" id="reviewRewatchRow" style="display:block;margin:8px 0;font-size:12.5px;"><input type="checkbox" id="reviewRewatch" /> This is a rewatch</label>
-                    <div id="rewatchDateRow" style="display:none;margin:8px 0;">
-                        <label class="ws-field" for="reviewDate" style="display:block;margin-bottom:4px;">Date watched</label>
-                        <input type="date" id="reviewDate" class="ws-input" style="max-width:200px;" />
-                    </div>
-                    <div id="reviewAccountRow" style="display:none;margin:8px 0;">
-                        <label class="ws-field" for="reviewAccount" style="display:block;margin-bottom:4px;">Post as</label>
-                        <select id="reviewAccount" class="ws-input" style="max-width:280px;">
-                            <option value="">All my Letterboxd accounts</option>
-                        </select>
-                        <span class="ws-muted" style="font-size:11.5px;display:block;margin-top:4px;">Defaults to posting on every linked Letterboxd account. Pick one to limit to that account only.</span>
-                    </div>
-                    <div style="display:flex;gap:10px;margin-top:8px;align-items:center;"><button type="button" class="ws-btn primary" id="reviewSubmit">Post review</button><button type="button" class="ws-btn" id="reviewCancel">Cancel</button><span id="reviewStatus" style="font-size:12.5px;"></span></div>
-                </div></dialog>
 
                 <script type="text/javascript">
                 (function () {
-                    // This dashboard's own root, found from this script: it sits inside the root on the
-                    // configuration page and next to it on the in-app page. Every lookup goes through it,
-                    // so the same ids elsewhere in the document (the admin settings page, which Jellyfin
-                    // keeps cached) can never be picked up instead of this page's own elements.
                     var me = document.currentScript;
                     var root = (me && (me.closest('#letterboxdUserPage') || (me.parentNode && me.parentNode.querySelector('#letterboxdUserPage')))) || document.getElementById('letterboxdUserPage');
-                    function byId(id) { return root.querySelector('#' + id); }
-                    var U = {
-                        serverUrl: '', token: '', ovFilter: 'all', merged: [], seen: {}, lb: [], sz: [], editing: null,
-                        reviewSvc: '', reviewTmdb: 0, reviewSlug: '',
-                        noActivityText: 'No activity yet. Link an account and start watching.', overviewWhat: 'your activity',
-                        retryable: ['loadOverview', 'loadAccounts'], modalIds: ['acctModal', 'reviewModal'], historyBodies: ['historyBody'],
-                        resolveAuth: function () {
-                            try { if (typeof ApiClient !== 'undefined') { this.serverUrl = ApiClient.serverAddress(); this.token = ApiClient.accessToken(); if (this.serverUrl && this.token) return true; } } catch (e) {}
-                            try { var creds = JSON.parse(localStorage.getItem('jellyfin_credentials') || '{}'); var s = (creds.Servers || [])[0]; if (s) { this.serverUrl = s.ManualAddress || s.LocalAddress || ''; this.token = s.AccessToken || ''; return !!(this.serverUrl && this.token); } } catch (e) {}
-                            return false;
-                        },
-                        get: function (path) { return fetch(this.serverUrl + '/' + path, { headers: { 'Authorization': 'MediaBrowser Token="' + this.token + '"' } }); },
-                        post: function (path, body) { return fetch(this.serverUrl + '/' + path, { method: 'POST', headers: { 'Authorization': 'MediaBrowser Token="' + this.token + '"', 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); },
-                        put: function (path, body) { return fetch(this.serverUrl + '/' + path, { method: 'PUT', headers: { 'Authorization': 'MediaBrowser Token="' + this.token + '"', 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); },
-
-                        getJson: function (path) { return this.get(path).then(this.json); },
-                        init: function () {
-                            var self = this;
-                            // Removed before it finished starting (the in-app page was left): stop retrying.
-                            if (!root || !root.isConnected) return;
-                            self.ensureViewport();
-                            if (!self.themed) { self.themed = true; self.followTheme(); }
-                            if (!self.resolveAuth()) { setTimeout(function () { self.init(); }, 400); return; }
-                            self.wireBack();
-                            self.wireCommon();
-                            self.loadOverview();
-                            self.loadAccounts();
-                            self.loadLibraries();
-                        },
-                        // Libraries you can see, for the per-account exclusion list. Fail-soft: null means
-                        // "unknown", and saving then keeps each account's stored list untouched.
-                        libraries: null,
-                        loadLibraries: function () {
-                            var self = this;
-                            self.get('Jellyfin.Plugin.LetterboxdSync/Libraries').then(function (r) { return r.ok ? r.json() : null; })
-                                .then(function (d) { if (d) self.libraries = d.libraries || []; }).catch(function () { });
-                        },
-                        libsFor: function (a) { return this.libsHtml((a && a.excludedLibraryIds) || []); },
-                        /* "Back to Jellyfin". Inside Jellyfin's web client it goes back to the page this one was
-                           opened from when the in-app page added its own history entry, and otherwise to Jellyfin's
-                           home through its router, so neither reloads the app. On its own (the configuration page
-                           opened directly) it opens Jellyfin's start page. Both keep the server's base URL. */
-                        wireBack: function () {
-                            var back = root.querySelector('.ws-back');
-                            var path = window.location.pathname, webAt = path.lastIndexOf('/web/');
-                            var base = webAt > 0 ? path.substring(0, webAt) : '';
-                            if (!/^(\/[A-Za-z0-9._~-]+)*$/.test(base)) base = '';
-                            var inJellyfin = !!root.closest('.mainAnimatedPages');
-                            back.href = inJellyfin ? path + window.location.search + '#/home' : base + '/web/';
-                            back.addEventListener('click', function (e) {
-                                if (inJellyfin && history.state && history.state.page === 'jellyscribe') { e.preventDefault(); history.back(); }
-                            });
-                        },
-                        json: function (r) { if (!r.ok) throw r; return r.json(); },
-                        // For writes: success is the status alone, so a reply without a JSON body still counts as saved.
-                        ok: function (r) { if (!r.ok) throw r; return r; },
-                        // The services filter f asks for, narrowed to those this user has an enabled account on,
-                        // so a service you never linked is not reported as an error. Until the accounts list has
-                        // loaded, every service is asked and the server's reply explains any refusal.
-                        syncJobs: function (f, paths) {
-                            var self = this, on = function (list) { return !self.acctsReady || list.some(function (a) { return a.enabled !== false; }); }, jobs = [];
-                            if ((f === 'all' || f === 'serializd') && on(this.sz)) jobs.push({ name: 'Serializd', path: 'Jellyfin.Plugin.LetterboxdSync/' + paths[0] });
-                            if ((f === 'all' || f === 'letterboxd') && on(this.lb)) jobs.push({ name: 'Letterboxd', path: 'Jellyfin.Plugin.LetterboxdSync/' + paths[1] });
-                            return jobs;
-                        },
-                        runSync: function () { this.startJobs('Sync', this.syncJobs(this.ovFilter, ['Serializd/SyncNow', 'Sync'])); },
-                        runWatchlist: function () { this.startJobs('Watchlist sync', this.syncJobs(this.ovFilter, ['Serializd/SyncWatchlistNow', 'SyncWatchlist'])); },
-                        // Starts each job, shows the server's reason for any it refused (no account, already
-                        // running), and watches progress only when at least one was accepted (202).
-                        startJobs: function (label, jobs) {
-                            var self = this, st = byId('syncStatus');
-                            if (!jobs.length) { st.innerHTML = '<span class="ws-red">No enabled account to sync. Link one, or resume a paused one, under My accounts.</span>'; return; }
-                            st.textContent = 'Starting…';
-                            self.setSyncBusy(true);
-                            Promise.all(jobs.map(function (j) {
-                                var name = jobs.length > 1 ? j.name + ': ' : '';
-                                return self.post(j.path, {}).then(function (r) {
-                                    if (r.status === 202) return { ok: true };
-                                    return self.errText(r).then(function (msg) { return { ok: false, msg: name + msg }; });
-                                }, function () { return { ok: false, msg: name + 'couldn\'t reach the server.' }; });
-                            })).then(function (res) {
-                                var errors = res.filter(function (x) { return !x.ok; }).map(function (x) { return x.msg; });
-                                st.innerHTML = errors.length ? '<span class="ws-red">' + self.esc(errors.join(' · ')) + '</span>' : '';
-                                if (res.some(function (x) { return x.ok; })) self.startWatcher(label); else self.setSyncBusy(false);
-                            });
-                        },
-                        // First run: nothing linked, everything paused, or linked with nothing logged yet. Shown
-                        // only while both the accounts and the overview stats are loaded, so a slow or failed load
-                        // never tells someone who has an account to link one.
-                        afterOverview: function (fs, ts) {
-                            // Skipped counts too: a first sync that found everything already in the diary has still run.
-                            this.logged = ['success', 'rewatches', 'skipped'].reduce(function (n, k) { return n + (fs[k] || 0) + (ts[k] || 0); }, 0);
-                            this.overviewReady = true; this.renderFirstRun();
-                        },
-                        setSyncBusy: function (busy) { byId('runSyncBtn').disabled = busy; byId('runWatchlistBtn').disabled = busy; byId('firstRunBtn').disabled = busy; },
-                        renderFirstRun: function () {
-                            var self = this, box = byId('firstRun');
-                            // An account whose sign-in keeps failing is paused by the server too, so it can't start syncing.
-                            var all = self.lb.concat(self.sz), enabled = all.filter(function (a) { return a.enabled !== false && !a.authPaused; });
-                            var mode = !(self.acctsReady && self.overviewReady) ? '' : !all.length ? 'link' : !enabled.length ? 'paused' : self.logged ? '' : 'sync';
-                            box.hidden = !mode;
-                            // With nothing linked, the sync buttons can only fail, so the card is the one action.
-                            byId('runSyncBtn').hidden = byId('runWatchlistBtn').hidden = mode === 'link';
-                            var title = byId('firstRunTitle'), text = byId('firstRunText'), btn = byId('firstRunBtn'), alt = byId('firstRunAlt');
-                            alt.hidden = true;
-                            var edit = function (a) { return function () { self.openAccount({ svc: self.sz.indexOf(a) >= 0 ? 'serializd' : 'letterboxd', i: self.sz.indexOf(a) >= 0 ? self.sz.indexOf(a) : self.lb.indexOf(a) }); }; };
-                            if (mode === 'link') {
-                                title.textContent = 'Link a diary to get started';
-                                text.textContent = 'Connect your Letterboxd account for films or your Serializd account for TV. After that, everything you finish watching here is logged to it.';
-                                btn.textContent = 'Link a diary';
-                                btn.onclick = function () { self.openAccount(null); };
-                            } else if (mode === 'paused') {
-                                title.textContent = 'Your account is paused';
-                                text.textContent = 'Nothing is logged while every linked account is paused or failing to sign in. Open it to turn it back on, or save its password again.';
-                                btn.textContent = 'Open account';
-                                btn.onclick = edit(all[0]);
-                            } else if (mode === 'sync') {
-                                // Without "Only sync recently played", the first sync sends every played film or episode
-                                // to the public diary, so say so before the button rather than after.
-                                var whole = enabled.filter(function (a) { return !a.enableDateFilter; });
-                                var tv = function (a) { return self.sz.indexOf(a) >= 0; };
-                                // Each runner's own window: Letterboxd uses the stored days as is, Serializd at least 1.
-                                var days = Math.max.apply(null, enabled.map(function (a) { return tv(a) ? Math.max(1, a.dateFilterDays || 0) : (a.dateFilterDays || 0); }));
-                                var catchUp = whole.length
-                                    ? 'The first sync also sends everything you have already played here, each on the day you watched it.'
-                                        + (whole.some(function (a) { return !tv(a); }) ? ' Letterboxd skips a film already in your diary on that day, but a film you logged on another day is added again as a rewatch.' : '')
-                                        + (whole.some(tv) ? ' Serializd gets every played episode, including ones you logged there yourself.' : '')
-                                        + ' To send only recent watches, turn on "Only sync recently played" first.'
-                                    : 'The first sync also sends what you played ' + (days === 0 ? 'today.' : days === 1 ? 'in the last day.' : 'in the last ' + days + ' days.');
-                                title.textContent = 'Nothing logged yet';
-                                text.textContent = 'Your account is linked, and whatever you finish watching from now on is logged as you watch it. ' + catchUp;
-                                btn.textContent = 'Sync now';
-                                btn.onclick = function () { self.startJobs('Sync', self.syncJobs('all', ['Serializd/SyncNow', 'Sync'])); };
-                                if (whole.length) { alt.hidden = false; alt.textContent = 'Account settings'; alt.onclick = edit(whole[0]); }
-                            }
-                        },
-                        /* ===== Accounts ===== */
-                        loadAccounts: function () {
-                            var self = this;
-                            Promise.all([self.get('Jellyfin.Plugin.LetterboxdSync/Accounts').then(self.json),
-                                self.get('Jellyfin.Plugin.LetterboxdSync/Serializd/Accounts').then(self.json)])
-                                .then(function (res) {
-                                    self.lb = (res[0] && res[0].accounts) || []; self.sz = (res[1] && res[1].accounts) || [];
-                                    // Watchlist collections and playlists are named by an admin; the server keeps the stored name for anyone else.
-                                    self.canSetWatchlistName = !!((res[0] && res[0].canSetWatchlistName) || (res[1] && res[1].canSetWatchlistName));
-                                    self.seerrReady = !!((res[0] && res[0].seerrConfigured) || (res[1] && res[1].seerrConfigured));
-                                    self.renderAccounts();
-                                    self.acctsReady = true;
-                                    self.renderFirstRun();
-                                })
-                                // Never render the add card on a failed load: saving from an empty list would overwrite the stored accounts.
-                                .catch(function () { self.acctsReady = false; self.renderFirstRun(); byId('acctGrid').innerHTML = '<div class="ws-panel" style="padding:2em;text-align:center;">' + self.errorHtml('your accounts', 'loadAccounts') + '</div>'; });
-                        },
-                        renderAccounts: function () {
-                            var self = this, cards = '';
-                            var cnt = (self.sz.length + self.lb.length); byId('acctCount').textContent = cnt || '';
-                            self.sz.forEach(function (a, i) { cards += self.card('serializd', a, i); });
-                            self.lb.forEach(function (a, i) { cards += self.card('letterboxd', a, i); });
-                            cards += '<button type="button" class="ws-add" onclick="WSU.openAccount(null)"><span class="plus">+</span>Link a diary<span class="ws-label">Film or TV</span></button>';
-                            byId('acctGrid').innerHTML = cards;
-                        },
-                        card: function (svc, a, i) {
-                            var self = this, uname = svc === 'serializd' ? (a.email || '?') : (a.letterboxdUsername || '?');
-                            var feats = svc === 'serializd'
-                                ? [['Favourites', a.syncFavorites], ['Watchlist', a.syncWatchlist], ['Seerr', a.autoRequestWatchlist], ['Import', a.enableDiaryImport]]
-                                : [['Favourites', a.syncFavorites], ['Watchlist', a.enableWatchlistSync], ['Seerr', a.autoRequestWatchlist], ['Cookies', !!a.hasCookies]];
-                            var chips = feats.map(function (f) { return self.feat(f[0], f[1]); }).join('');
-                            return '<div class="ws-acct ' + (svc === 'serializd' ? 'tv' : 'film') + '"><div class="top"><span class="ws-badge ' + (svc === 'serializd' ? 'tv' : 'film') + '">' + (svc === 'serializd' ? 'TV' : 'MV') + '</span><div style="min-width:0;"><div class="u" title="' + self.esc(uname) + '">' + self.esc(uname) + '</div><div class="svc ' + (svc === 'serializd' ? 'tv' : 'film') + '">' + (svc === 'serializd' ? 'Serializd · TV' : 'Letterboxd · Film') + '</div></div>' + (a.isPrimary ? '<span class="ws-prim">Primary</span>' : '') + '</div><div class="ws-featchips">' + chips + '</div><div class="foot"><span class="st">' + (a.authPaused ? '<span class="ws-red" title="Letterboxd login has been failing since ' + self.esc(a.authPausedSince ? String(a.authPausedSince).slice(0, 10) : '?') + '. Re-save this account\'s credentials to resume syncing.">Login failing · sync paused</span>' : (a.enabled !== false ? '<span class="ws-green">Enabled</span>' : '<span class="ws-muted">Paused</span>')) + '</span><button type="button" class="ws-linkbtn" onclick="WSU.openAccount({svc:\'' + svc + '\',i:' + i + '})">Edit ›</button></div></div>';
-                        },
-                        checksFor: function (svc, a) {
-                            a = a || {};
-                            var rows = [['Enabled', 'chkEnabled', a.enabled !== false, 'Master switch for this account.'],
-                                ['Mark favourites as liked', 'chkFav', !!a.syncFavorites, 'Favourite in Jellyfin → hearted on the diary.']]
-                                // Always rendered; onSvcChange shows it only for Letterboxd, so switching the
-                                // service on a new account reveals it without re-rendering the other boxes.
-                                .concat([['Sync ratings to Letterboxd', 'chkRatings', a.syncRatings !== false, 'Rate a film you\'ve played → your Letterboxd film rating.']])
-                                // syncVisibility hides Primary, the Seerr rows and the two request options when they can do nothing.
-                                .concat([['Only sync recently played', 'chkDate', !!a.enableDateFilter, 'Limit the catch-up to the last N days.'],
-                                ['Sync watchlist to library', 'chkWatch', svc === 'serializd' ? !!a.syncWatchlist : !!a.enableWatchlistSync, this.watchDesc(svc)],
-                                ['Import diary as watched', 'chkImport', !!a.enableDiaryImport, 'Mark Jellyfin played from the diary.'],
-                                ['Primary account', 'chkPrimary', !!a.isPrimary, 'Wins on tie-breaks when you have several.'],
-                                ['Auto-request via Seerr', 'chkSeerr', !!a.autoRequestWatchlist, 'Missing from the library → request via Seerr.'],
-                                ['Backfill Seerr requests', 'chkBackfill', !!a.backfillAvailableRequests, 'Also attribute a Seerr request for already-available titles.', true],
-                                ['Re-request watched titles', 'chkRerequest', !!a.requestWatchedTitles, 'Also request titles you already watched, e.g. after a cleanup tool deletes them.', true],
-                                ['Mirror watchlist to Seerr', 'chkMirror', !!a.mirrorJellyseerrWatchlist, 'Push this watchlist into your Seerr watchlist (primary account only).']]);
-                            return this.checksHtml(rows, a.enableDateFilter, a.dateFilterDays);
-                        },
-                        seerrConfigured: function () { return !!this.seerrReady; },
-                        // Accounts of this service once the dialog is saved: an edit keeps the count, a new link adds one.
-                        accountsOfService: function (svc) { return ((svc === 'serializd' ? this.sz : this.lb) || []).length + (this.editing ? 0 : 1); },
-                        // The one toggle whose wording depends on the service; onSvcChange keeps it in step.
-                        watchDesc: function (svc) { return 'Watchlist → Jellyfin ' + (svc === 'serializd' ? 'collection + playlist. Everyone who can see those shows can see the collection.' : 'playlist.'); },
-                        openAccount: function (ref) {
-                            var self = this, svc = ref ? ref.svc : 'serializd', a = null;
-                            if (ref) a = (svc === 'serializd' ? self.sz : self.lb)[ref.i];
-                            self.editing = ref ? { svc: svc, i: ref.i } : null;
-                            byId('acctModalTitle').textContent = a ? 'Edit account' : 'Link a diary';
-                            byId('mSvc').value = svc; byId('mSvc').disabled = !!a;
-                            byId('mUsername').value = a ? (svc === 'serializd' ? a.email : a.letterboxdUsername) : '';
-                            // Saved secrets never come back from the server (only has* flags): blank keeps them, typing replaces them.
-                            self.fillSecret('mPassword', !!(a && a.hasPassword), 'Leave blank to keep the saved password', '');
-                            self.fillSecret('mAuthBlob', !!(a && a.hasCookies), 'Leave blank to keep the saved cookies', 'From a signed-in browser (incl. cf_clearance)');
-                            byId('mUserAgent').value = (a && a.userAgent) || '';
-                            byId('mWatchName').value = (a && (svc === 'serializd' ? a.watchlistName : a.playlistName)) || '';
-                            byId('mWatchNameRow').style.display = self.canSetWatchlistName ? '' : 'none';
-                            byId('mVerifyStatus').textContent = ''; byId('mStatus').textContent = '';
-                            byId('mDeleteBtn').style.display = a ? '' : 'none';
-                            byId('mConfirmRow').style.display = 'none';
-                            this.setModalBusy(false);
-                            byId('mChecks').innerHTML = self.checksFor(svc, a);
-                            byId('mLibs').innerHTML = self.libsFor(a);
-                            byId('mLibRow').style.display = (self.libraries || []).length ? 'block' : 'none';
-                            byId('chkDate').addEventListener('change', function () { byId('dateDaysRow').style.display = this.checked ? 'block' : 'none'; });
-                            self.onSvcChange();
-                            self.openModal('acctModal');
-                        },
-                        saveAccount: function () {
-                            var self = this, m = self.collectModal();
-                            if (!self.validAccountForm(m) || self.modalBusy) return;
-                            byId('mStatus').textContent = 'Saving…';
-                            var orig = self.editing ? (m.svc === 'serializd' ? self.sz : self.lb)[self.editing.i] : null;
-                            // The new list is built from a copy, so a failed save leaves the loaded list as it was
-                            // and pressing Save again cannot add the account twice.
-                            var list = (m.svc === 'serializd' ? self.sz : self.lb).slice();
-                            self.setModalBusy(true);
-                            var excludedLibs = self.mergeExcluded((orig && orig.excludedLibraryIds) || [], m.libs);
-                            if (m.svc === 'serializd') {
-                                // original* names the login this edit started from, so its saved password follows a changed email.
-                                var item = { email: m.username, originalEmail: orig ? orig.email : null, password: m.password, enabled: m.enabled, syncFavorites: m.fav, enableDateFilter: m.date, dateFilterDays: m.days, isPrimary: m.primary, syncWatchlist: m.watch, autoRequestWatchlist: m.seerr, backfillAvailableRequests: m.backfill, requestWatchedTitles: m.rereq, mirrorJellyseerrWatchlist: m.mirror, watchlistName: m.watchName || null, enableDiaryImport: m.imp, excludedLibraryIds: excludedLibs };
-                                if (self.editing) list[self.editing.i] = item; else list.push(item);
-                                self.put('Jellyfin.Plugin.LetterboxdSync/Serializd/Accounts', { accounts: list }).then(self.ok).then(function () { self.afterSave(); }, function (err) { self.afterSave(err); });
-                            } else {
-                                var itemL = { letterboxdUsername: m.username, originalLetterboxdUsername: orig ? orig.letterboxdUsername : null, letterboxdPassword: m.password, rawCookies: m.cookies || null, clearRawCookies: !m.cookies && m.clearCookies, userAgent: m.userAgent || null, enabled: m.enabled, syncFavorites: m.fav, syncRatings: m.ratings, enableDateFilter: m.date, dateFilterDays: m.days, isPrimary: m.primary, enableWatchlistSync: m.watch, autoRequestWatchlist: m.seerr, backfillAvailableRequests: m.backfill, requestWatchedTitles: m.rereq, mirrorJellyseerrWatchlist: m.mirror, playlistName: m.watchName || null, enableDiaryImport: m.imp, excludedLibraryIds: excludedLibs };
-                                if (self.editing) list[self.editing.i] = itemL; else list.push(itemL);
-                                self.put('Jellyfin.Plugin.LetterboxdSync/Accounts', { accounts: list }).then(self.ok).then(function () { self.afterSave(); }, function (err) { self.afterSave(err); });
-                            }
-                        },
-                        afterSave: function (err, failedWhat, doneText) {
-                            var self = this;
-                            self.setModalBusy(false);
-                            if (err) { self.saveFailed(err, null, failedWhat); return; }
-                            // Reload after a save: the list must match what the server stored, and must not keep a typed secret.
-                            self.loadAccounts();
-                            self.closeModal('acctModal'); byId('saveStatus').innerHTML = '<span class="ws-green">' + (doneText || 'Saved.') + '</span>';
-                        },
-                        // Runs from the confirm step's "Yes, remove"; the account leaves the list only once the server has removed it.
-                        deleteAccount: function () {
-                            var self = this; if (!self.editing || self.modalBusy) return;
-                            var tv = self.editing.svc === 'serializd', list = (tv ? self.sz : self.lb).slice();
-                            list.splice(self.editing.i, 1);
-                            byId('mStatus').textContent = 'Removing…';
-                            self.setModalBusy(true);
-                            self.put(tv ? 'Jellyfin.Plugin.LetterboxdSync/Serializd/Accounts' : 'Jellyfin.Plugin.LetterboxdSync/Accounts', { accounts: list })
-                                .then(self.ok).then(function () { self.afterSave(null, null, 'Removed.'); }, function (err) { self.afterSave(err, 'Remove failed'); });
-                        },
-                        verifyAccount: function () {
-                            var self = this, svc = byId('mSvc').value, st = byId('mVerifyStatus');
-                            // A blank password checks the saved one: the server looks it up for the account being
-                            // edited (by the login it started from), so it never comes back to the browser.
-                            var orig = self.editing ? (self.editing.svc === 'serializd' ? self.sz : self.lb)[self.editing.i] : null;
-                            if (svc === 'letterboxd') {
-                                var lbUser = byId('mUsername').value.trim(), lbPw = byId('mPassword').value;
-                                if (!lbUser || (!lbPw && !(orig && orig.hasPassword))) { st.innerHTML = '<span class="ws-red">Username and password required.</span>'; return; }
-                                st.innerHTML = '<span class="ws-muted">Verifying… (can take a few seconds)</span>';
-                                self.post('Jellyfin.Plugin.LetterboxdSync/Verify', { letterboxdUsername: lbUser, letterboxdPassword: lbPw || null, rawCookies: byId('mAuthBlob').value || null, clearRawCookies: byId('mAuthBlobClear').checked, userAgent: byId('mUserAgent').value.trim() || null, originalLetterboxdUsername: orig ? orig.letterboxdUsername : null })
-                                    .then(function (r) { r.json().then(function (d) { st.innerHTML = self.verifyMessage(r.ok, d); }, function () { st.innerHTML = self.verifyMessage(r.ok, null); }); },
-                                        function () { st.innerHTML = self.unreachable(); });
-                                return;
-                            }
-                            var email = byId('mUsername').value.trim(), pw = byId('mPassword').value;
-                            if (!email || (!pw && !(orig && orig.hasPassword))) { st.innerHTML = '<span class="ws-red">Email and password required.</span>'; return; }
-                            st.innerHTML = '<span class="ws-muted">Verifying…</span>';
-                            this.post('Jellyfin.Plugin.LetterboxdSync/Serializd/Verify', { email: email, password: pw || null, originalEmail: orig ? orig.email : null }).then(function (r) { if (r.ok) { r.json().then(function (d) { st.innerHTML = '<span class="ws-green">Login OK' + (d.username ? ' (' + self.esc(d.username) + ')' : '') + '.</span>'; }, function () { st.innerHTML = '<span class="ws-green">Login OK.</span>'; }); } else if (r.status === 429) { r.json().then(function (d) { st.innerHTML = '<span class="ws-red">' + self.esc(d.error) + '</span>'; }, function () { st.innerHTML = '<span class="ws-red">Too many login checks. Try again later.</span>'; }); } else { st.innerHTML = '<span class="ws-red">Login failed.</span>'; } }, function () { st.innerHTML = self.unreachable(); });
-                        },
-                        // Where each dialog gives focus back when it closes (openModal, in jellyscribe.js).
-                        returnFocus: {},
-                        // Uses the accounts already loaded by loadAccounts (self-service; the
-                        // /Accounts endpoint only ever returns the calling user's own accounts),
-                        // so no extra request is needed here.
-                        populateReviewAccountDropdown: function () {
-                            var self = this, sel = byId('reviewAccount'), row = byId('reviewAccountRow');
-                            if (!sel || !row) return;
-                            sel.innerHTML = '<option value="">All my Letterboxd accounts</option>';
-                            var mine = (this.lb || []).filter(function (a) { return a.enabled !== false; });
-                            mine.sort(function (a, b) { return (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0); });
-                            mine.forEach(function (a) {
-                                var label = a.letterboxdUsername + (a.isPrimary ? ' (primary)' : '');
-                                sel.insertAdjacentHTML('beforeend', '<option value="' + self.esc(a.letterboxdUsername) + '">' + self.esc(label) + '</option>');
-                            });
-                            row.style.display = mine.length >= 2 ? '' : 'none';
-                        }
-                    };
-                    /* Loads this build's shared stylesheet and script (jellyscribe.css and jellyscribe.js), then
-                       starts the page, which stays hidden until both are in. The version is stamped in at build
-                       time; it is in each URL and in the key a loaded copy is reused by, and the shared script
-                       registers itself under it, so a page served after an upgrade never runs against an older
-                       copy still loaded in this tab. */
-                    var V = '@@JELLYSCRIBE_VERSION@@';
-                    function sharedAsset(tag, file) {
-                        var key = tag + '[data-jellyscribe="' + file + '"]', el = document.head.querySelector(key + '[data-v="' + V + '"]');
-                        if (el && el.hasAttribute('data-loaded')) return Promise.resolve();
-                        if (!el) {
-                            var path = 'LetterboxdSync/Web/' + file;
-                            // Through Jellyfin's client, so a server under a base URL works; else relative to /web/.
-                            var url = window.ApiClient && ApiClient.getUrl ? ApiClient.getUrl(path, { v: V }) : '../' + path + '?v=' + encodeURIComponent(V);
-                            el = document.createElement(tag);
-                            el.setAttribute('data-jellyscribe', file);
-                            el.setAttribute('data-v', V);
-                            if (tag === 'link') { el.rel = 'stylesheet'; el.href = url; } else el.src = url;
-                            el.addEventListener('load', function () {
-                                el.setAttribute('data-loaded', '');
-                                // Another build's copy (from before an upgrade) is no longer needed.
-                                Array.prototype.forEach.call(document.head.querySelectorAll(key), function (old) { if (old !== el) old.remove(); });
-                            }, { once: true });
-                            el.addEventListener('error', function () { el.remove(); }, { once: true });
-                            document.head.appendChild(el);
-                        }
-                        return new Promise(function (resolve, reject) {
-                            var done = function (e) {
-                                el.removeEventListener('load', done); el.removeEventListener('error', done);
-                                if (e.type === 'load') resolve(); else reject(new Error(file));
-                            };
-                            el.addEventListener('load', done); el.addEventListener('error', done);
-                        });
-                    }
-                    function failed() {
-                        if (!root.isConnected) return;
-                        root.style.visibility = '';
-                        root.innerHTML = '<p style="padding:2em;">Couldn\'t load the Jellyscribe page. Reload to try again.</p>';
-                    }
                     if (!root) return;
-                    Promise.all([sharedAsset('link', 'jellyscribe.css'), sharedAsset('script', 'jellyscribe.js')]).then(function () {
-                        if (!root.isConnected) return; // left while loading
-                        var make = window.JellyscribeShared && window.JellyscribeShared[V];
-                        if (typeof make !== 'function') { failed(); return; }
-                        var shared = make(root);
-                        Object.keys(shared).forEach(function (k) { if (!(k in U)) U[k] = shared[k]; });
-                        root.style.visibility = '';
-                        window.WSU = U;
-                        U.init();
-                    }, failed);
+                    function $(id) { return root.querySelector('#' + id); }
+                    var EN = /^en/i.test(document.documentElement.lang || '');
+                    var L = {
+                        title: ['Letterboxd-Konto', 'Letterboxd account'],
+                        intro: ['Einträge entstehen nur, wenn du in Cinema Glass „Speichern“ drückst. Nichts wird automatisch übertragen.', 'Entries are only created when you press “Save” in Cinema Glass. Nothing is sent automatically.'],
+                        logOn: ['Einträge an Letterboxd senden', 'Send entries to Letterboxd'],
+                        logOnHint: ['Aus: „Speichern“ bewertet nur noch in Jellyfin.', 'Off: “Save” only rates in Jellyfin.'],
+                        change: ['Anmeldung ändern', 'Change login'],
+                        unlink: ['Verknüpfung trennen', 'Unlink'],
+                        unlinkQ: ['Verknüpfung trennen? Die gespeicherte Anmeldung wird vom Server gelöscht. Dein Letterboxd-Tagebuch bleibt unverändert.', 'Unlink? The stored login is deleted from the server. Your Letterboxd diary stays as it is.'],
+                        unlinkYes: ['Trennen', 'Unlink'],
+                        cancel: ['Abbrechen', 'Cancel'],
+                        user: ['Benutzername', 'Username'],
+                        pass: ['Passwort', 'Password'],
+                        passHint: ['Wird einmal bei Letterboxd geprüft und dann verschlüsselt auf deinem Jellyfin-Server gespeichert.', 'Checked once with Letterboxd, then stored encrypted on your Jellyfin server.'],
+                        link: ['Verknüpfen', 'Link'],
+                        save: ['Speichern', 'Save'],
+                        notLinked: ['Nicht verknüpft', 'Not linked'],
+                        notLinkedSub: ['Melde dich mit deinem Letterboxd-Konto an.', 'Sign in with your Letterboxd account.'],
+                        linkedOn: ['Verknüpft · Senden an', 'Linked · sending on'],
+                        linkedOff: ['Verknüpft · Senden aus', 'Linked · sending off'],
+                        waiting: ['%1 wartend', '%1 waiting'],
+                        failing: ['Anmeldung scheitert – bitte „Anmeldung ändern“.', 'Login failing – please use “Change login”.'],
+                        needBoth: ['Bitte Benutzernamen und Passwort eingeben.', 'Please enter username and password.'],
+                        badLogin: ['Anmeldung fehlgeschlagen – Benutzername oder Passwort stimmt nicht.', 'Login failed – wrong username or password.'],
+                        tooMany: ['Zu viele Anmeldeversuche. Bitte in ein paar Minuten erneut versuchen.', 'Too many login attempts. Please try again in a few minutes.'],
+                        lbDown: ['Letterboxd ist gerade nicht erreichbar. Bitte später erneut versuchen.', 'Letterboxd cannot be reached right now. Please try again later.'],
+                        noEmail: ['Bitte den Letterboxd-Benutzernamen verwenden, nicht die E-Mail-Adresse.', 'Please use your Letterboxd username, not your email address.'],
+                        checking: ['Anmeldung wird bei Letterboxd geprüft …', 'Checking the login with Letterboxd …'],
+                        linked: ['Verknüpft.', 'Linked.'],
+                        unlinked: ['Verknüpfung getrennt.', 'Unlinked.'],
+                        unreachable: ['Der Server ist gerade nicht erreichbar.', 'The server cannot be reached right now.'],
+                        loadFail: ['Konnte nicht geladen werden.', 'Could not be loaded.']
+                    };
+                    function t(k, a) { var v = (L[k] || [k, k])[EN ? 1 : 0]; return a != null ? v.replace('%1', a) : v; }
+                    Array.prototype.forEach.call(root.querySelectorAll('[data-t]'), function (el) { el.textContent = t(el.getAttribute('data-t')); });
+                    var S = { server: '', token: '', acct: null, editing: false, busy: false };
+                    function auth() {
+                        try { if (window.ApiClient) { S.server = ApiClient.serverAddress(); S.token = ApiClient.accessToken(); if (S.server && S.token) return true; } } catch (e) { }
+                        try { var c = JSON.parse(localStorage.getItem('jellyfin_credentials') || '{}'), s = (c.Servers || [])[0]; if (s) { S.server = s.ManualAddress || s.LocalAddress || ''; S.token = s.AccessToken || ''; return !!(S.server && S.token); } } catch (e) { }
+                        return false;
+                    }
+                    // GET / POST / DELETE LetterboxdLog/Account; jede Antwort ist der neue Kontostand oder { error }.
+                    function call(method, body) {
+                        var h = { 'Authorization': 'MediaBrowser Token="' + S.token + '"', 'Accept': 'application/json' };
+                        if (body) h['Content-Type'] = 'application/json';
+                        return fetch(S.server + '/LetterboxdLog/Account', { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, credentials: 'omit' })
+                            .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(errText(r.status, (d && d.error) || '')); return d; }); },
+                                function () { throw new Error(t('unreachable')); });
+                    }
+                    // Die Server-Meldungen sind englisch; die bekannten Fälle auf Deutsch zeigen.
+                    function errText(status, e) {
+                        if (status === 429) return t('tooMany');
+                        if (status === 502) return t('lbDown');
+                        if (/email address/i.test(e)) return t('noEmail');
+                        if (/^Login failed/i.test(e)) return t('badLogin');
+                        if (/required/i.test(e)) return t('needBoth');
+                        return e || ('HTTP ' + status);
+                    }
+                    function msg(text, err) { var m = $('lbxMsg'); m.className = 'lbx-msg' + (err ? ' is-err' : ''); m.textContent = text || ''; }
+                    function busy(b) { S.busy = b; ['lbxSaveBtn', 'lbxEditBtn', 'lbxUnlinkBtn', 'lbxUnlinkYes', 'lbxEnabled'].forEach(function (id) { $(id).disabled = b; }); }
+                    function render() {
+                        var a = S.acct || {}, linked = !!a.linked;
+                        $('lbxAvatar').classList.toggle('is-on', linked && a.enabled);
+                        $('lbxName').textContent = linked ? a.username : t('notLinked');
+                        var sub = linked ? (a.enabled ? t('linkedOn') : t('linkedOff')) : t('notLinkedSub');
+                        if (linked && a.queued) sub += ' · ' + t('waiting', a.queued);
+                        $('lbxSub').textContent = sub;
+                        $('lbxLinked').hidden = !linked || S.editing;
+                        $('lbxForm').hidden = linked && !S.editing;
+                        $('lbxCancelBtn').hidden = !linked;
+                        $('lbxSaveBtn').textContent = linked ? t('save') : t('link');
+                        $('lbxEnabled').checked = !!a.enabled;
+                        if (linked && a.loginFailing && !$('lbxMsg').textContent) msg(t('failing'), true);
+                    }
+                    function done(d, text) { S.acct = d; S.editing = false; busy(false); $('lbxPass').value = ''; $('lbxConfirm').hidden = true; msg(text || ''); render(); }
+                    function fail(e) { busy(false); msg(e.message, true); render(); }
+                    $('lbxForm').addEventListener('submit', function (e) {
+                        e.preventDefault(); if (S.busy) return;
+                        var u = $('lbxUser').value.trim(), p = $('lbxPass').value;
+                        if (!u || !p) { msg(t('needBoth'), true); return; }
+                        busy(true); msg(t('checking'));
+                        call('POST', { username: u, password: p }).then(function (d) { done(d, t('linked')); }, fail);
+                    });
+                    $('lbxEnabled').addEventListener('change', function () { var v = this.checked; busy(true); msg(''); call('POST', { enabled: v }).then(function (d) { done(d); }, fail); });
+                    $('lbxEditBtn').addEventListener('click', function () { S.editing = true; msg(''); $('lbxUser').value = (S.acct && S.acct.username) || ''; render(); $('lbxPass').focus(); });
+                    $('lbxCancelBtn').addEventListener('click', function () { S.editing = false; msg(''); render(); });
+                    $('lbxUnlinkBtn').addEventListener('click', function () { $('lbxConfirm').hidden = false; });
+                    $('lbxUnlinkNo').addEventListener('click', function () { $('lbxConfirm').hidden = true; });
+                    $('lbxUnlinkYes').addEventListener('click', function () { if (S.busy) return; busy(true); call('DELETE').then(function (d) { done(d, t('unlinked')); }, fail); });
+                    var tries = 0;
+                    (function start() {
+                        if (!root.isConnected) return;
+                        if (!auth()) { if (++tries < 50) setTimeout(start, 300); return; }
+                        call('GET').then(function (d) { S.acct = d; render(); }, function (e) { $('lbxName').textContent = t('loadFail'); msg(e.message, true); });
+                    })();
                 })();
                 </script>
             </div>

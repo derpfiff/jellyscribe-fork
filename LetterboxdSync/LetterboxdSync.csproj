@@ -7,8 +7,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>2.15.0.124</AssemblyVersion>
-    <FileVersion>2.15.0.124</FileVersion>
+    <AssemblyVersion>2.15.0.125</AssemblyVersion>
+    <FileVersion>2.15.0.125</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +28,11 @@
     <Reference Include="Jellyfin.Database.Implementations"><HintPath>../lib/Jellyfin.Database.Implementations.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Jellyfin.Extensions"><HintPath>../lib/Jellyfin.Extensions.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Newtonsoft.Json"><HintPath>../lib/Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <!-- Fork: the File Transformation sidebar task is not built (no Jellyscribe entry in the web client). -->
+  <ItemGroup>
+    <Compile Remove="SidebarInjection.cs" />
   </ItemGroup>
 
   <ItemGroup>

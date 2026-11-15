@@ -34,7 +34,9 @@ public class ServiceRegistrator : IPluginServiceRegistrator
         // serviceCollection.AddHostedService<RepositoryMigrationService>();
         serviceCollection.AddHostedService<UserIdentityService>();
 
-        // Adds the sidebar link to the web client without the File Transformation plugin.
-        serviceCollection.AddSingleton<Microsoft.AspNetCore.Hosting.IStartupFilter, SidebarScriptStartupFilter>();
+        // Fork: no Jellyscribe entry in the web client's sidebar or user menu. The account is linked
+        // in Cinema Glass through LetterboxdLogController, so sidebar.js is no longer injected
+        // (SidebarScriptStartupFilter is not registered, SidebarInjection.cs is not compiled).
+        // serviceCollection.AddSingleton<Microsoft.AspNetCore.Hosting.IStartupFilter, SidebarScriptStartupFilter>();
     }
 }

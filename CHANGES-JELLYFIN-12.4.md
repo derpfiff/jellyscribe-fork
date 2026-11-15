@@ -1,7 +1,7 @@
 # Changes in this fork (Jellyfin 12.4 build)
 
 Based on builtbyproxy/jellyfin-plugin-letterboxd ("Jellyscribe") v2.15.0, commit 7bdd2b61,
-MIT licence (see LICENSE, unchanged). Version 2.15.0.124.
+MIT licence (see LICENSE, unchanged). Version 2.15.0.125.
 
 - Build: net10.0, compiled against the Jellyfin 12.4 server assemblies in `lib/` instead of the
   10.11 NuGet packages; DataProtection from the ASP.NET Core shared framework. `build.sh` builds
@@ -23,3 +23,13 @@ MIT licence (see LICENSE, unchanged). Version 2.15.0.124.
 - Test hooks: `JELLYSCRIBE_LETTERBOXD_API_URL` points the API client at another server (and then
   disables the letterboxd.com website fallback); `JELLYSCRIBE_LOG_RETRY_MINUTES` changes the
   retry interval.
+- 2.15.0.125: no Jellyscribe entry in the web client any more (`SidebarScriptStartupFilter` not
+  registered, `SidebarInjection.cs` not built). New account API on `LetterboxdLog` for Cinema Glass:
+  `GET /LetterboxdLog/Account` -> `{ linked, username, enabled, loginFailing, queued }`;
+  `POST /LetterboxdLog/Account` `{ username, password, enabled? }` signs in once through the
+  official API before storing (400 `{ error }` on a bad login, 429 when rate-limited, 502 when
+  Letterboxd is unreachable); `{ enabled }` alone switches sending; `DELETE /LetterboxdLog/Account`
+  unlinks. Admin-only `GET /LetterboxdLog/Overview` lists linked users with queued/posted/error
+  counts. `configPage.html` (admin) and `userPage.html` (unlinked fallback) rewritten as minimal
+  pages in the Cinema Glass look; sync, watchlist, Seerr, Serializd, telemetry, import, cookie and
+  log screens are gone from the UI, their endpoints are unchanged.
