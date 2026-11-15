@@ -28,6 +28,7 @@ public class ServiceRegistrator : IPluginServiceRegistrator
         // serviceCollection.AddHostedService<PlaybackHandler>();
         // serviceCollection.AddHostedService<RatingSyncHandler>();
         serviceCollection.AddSingleton<LetterboxdLog.LetterboxdLogService>();
+        serviceCollection.AddSingleton<LetterboxdLog.LetterboxdRatingsService>();
         serviceCollection.AddHostedService<LetterboxdLog.LetterboxdLogRetryService>();
         // Fork: not registered. Upstream adds its own plugin repository to the server's catalog,
         // which would offer upstream builds as "updates" that replace this Jellyfin 12.4 fork.

@@ -608,6 +608,83 @@ public class LetterboxdApiClient : ILetterboxdService
         return entries;
     }
 
+    /// <summary>
+    /// Fork: every film the signed-in member has marked watched, with their own rating and like.
+    /// GET /films?member=…&amp;memberRelationship=Watched&amp;include=MemberRelationship, paged by cursor.
+    /// On Letterboxd rating or liking a film marks it watched, so this also holds the films rated
+    /// without a diary entry. Reads pages one after another with <paramref name="pageDelay"/> in
+    /// between and stops after <paramref name="maxItems"/> films (Truncated = true). Films without
+    /// a TMDb movie link are skipped. Throws on any failure instead of returning a partial list.
+    /// </summary>
+    public async Task<(List<MemberFilm> Items, bool Truncated)> GetMemberFilmsAsync(int maxItems, TimeSpan pageDelay,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureAuthenticated();
+        var list = new List<MemberFilm>();
+        var seenTmdb = new HashSet<int>();
+        var seenCursors = new HashSet<string>(StringComparer.Ordinal);
+        var seenItemIds = new HashSet<string>(StringComparer.Ordinal);
+        var baseQuery = $"perPage=100&member={Uri.EscapeDataString(_memberId)}&memberRelationship=Watched&include=MemberRelationship";
+        string? cursor = null;
+        var read = 0;
+
+        for (var page = 0; page < MaxPages; page++)
+        {
+            if (page > 0 && pageDelay > TimeSpan.Zero)
+                await Task.Delay(pageDelay, cancellationToken).ConfigureAwait(false);
+            var qp = cursor == null ? baseQuery : $"{baseQuery}&cursor={Uri.EscapeDataString(cursor)}";
+            var response = await SendSignedAsync(HttpMethod.Get, "/films", queryParams: qp, authenticated: true,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (!root.TryGetProperty("items", out var items) || items.ValueKind != JsonValueKind.Array)
+                throw IncompleteRead("rated films", read, "a page with no list of items");
+            var hasNext = root.TryGetProperty("next", out var nextEl) && nextEl.ValueKind == JsonValueKind.String
+                && !string.IsNullOrEmpty(nextEl.GetString());
+
+            var newItems = 0;
+            foreach (var item in items.EnumerateArray())
+            {
+                var itemId = item.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String ? idEl.GetString() : null;
+                if (itemId != null && !seenItemIds.Add(itemId)) continue;
+                newItems++;
+                if (++read > maxItems)
+                    return (list, true);
+                var tmdbId = ExtractTmdbIdFromLinks(item);
+                if (!tmdbId.HasValue || !seenTmdb.Add(tmdbId.Value)) continue;
+
+                string? title = item.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String ? n.GetString() : null;
+                int? year = item.TryGetProperty("releaseYear", out var y) && y.ValueKind == JsonValueKind.Number ? y.GetInt32() : null;
+                double? rating = null;
+                bool liked = false, watched = true;
+                if (item.TryGetProperty("relationships", out var rels) && rels.ValueKind == JsonValueKind.Array && rels.GetArrayLength() > 0
+                    && rels[0].TryGetProperty("relationship", out var rel) && rel.ValueKind == JsonValueKind.Object)
+                {
+                    if (rel.TryGetProperty("rating", out var r) && r.ValueKind == JsonValueKind.Number) rating = r.GetDouble();
+                    if (rel.TryGetProperty("liked", out var l) && (l.ValueKind == JsonValueKind.True || l.ValueKind == JsonValueKind.False)) liked = l.GetBoolean();
+                    if (rel.TryGetProperty("watched", out var w) && (w.ValueKind == JsonValueKind.True || w.ValueKind == JsonValueKind.False)) watched = w.GetBoolean();
+                }
+                list.Add(new MemberFilm(tmdbId.Value, title, year, rating, liked, watched));
+            }
+
+            if (!hasNext)
+                return (list, false);
+            if (read >= maxItems)
+                return (list, true);
+            var next = nextEl.GetString()!;
+            if (newItems == 0)
+                throw IncompleteRead("rated films", read, "the same page again instead of the next one");
+            if (!seenCursors.Add(next))
+                throw IncompleteRead("rated films", read, "a next-page marker it had already followed");
+            cursor = next;
+        }
+
+        return (list, true);
+    }
+
     // 200 pages of 100 is 20,000 films, far beyond any real watchlist or diary; the cap only
     // exists so a misbehaving API can never loop forever.
     private const int MaxPages = 200;
@@ -1129,3 +1206,6 @@ public class LetterboxdApiClient : ILetterboxdService
 
     internal record TokenInfo(string AccessToken, string RefreshToken, DateTime ExpiresAtUtc, string MemberId);
 }
+
+/// <summary>Fork: one film of the member's own Letterboxd relationship list (see GetMemberFilmsAsync).</summary>
+public sealed record MemberFilm(int TmdbId, string? Title, int? Year, double? Rating, bool Liked, bool Watched);

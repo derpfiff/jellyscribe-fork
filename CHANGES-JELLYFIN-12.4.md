@@ -1,7 +1,7 @@
 # Changes in this fork (Jellyfin 12.4 build)
 
 Based on builtbyproxy/jellyfin-plugin-letterboxd ("Jellyscribe") v2.15.0, commit 7bdd2b61,
-MIT licence (see LICENSE, unchanged). Version 2.15.0.125.
+MIT licence (see LICENSE, unchanged). Version 2.15.0.126.
 
 - Build: net10.0, compiled against the Jellyfin 12.4 server assemblies in `lib/` instead of the
   10.11 NuGet packages; DataProtection from the ASP.NET Core shared framework. `build.sh` builds
@@ -33,3 +33,14 @@ MIT licence (see LICENSE, unchanged). Version 2.15.0.125.
   counts. `configPage.html` (admin) and `userPage.html` (unlinked fallback) rewritten as minimal
   pages in the Cinema Glass look; sync, watchlist, Seerr, Serializd, telemetry, import, cookie and
   log screens are gone from the UI, their endpoints are unchanged.
+- 2.15.0.126: `GET /LetterboxdLog/Ratings[?refresh=1]` (caller's own token) returns every film the
+  linked member rated, liked or marked watched, also without a diary entry:
+  `{ linked, username, fetchedAt, stale, error, truncated, count, items: [{ tmdbId, title, year,
+  rating, liked, watched }] }`. Read through the official API (`GET /films?member=<id>&
+  memberRelationship=Watched&include=MemberRelationship`, 100 per page, cursor paging, pages one
+  after another 400 ms apart, at most 5000 films; `JELLYSCRIBE_RATINGS_PAGE_DELAY_MS` changes the
+  pause). Cached per user for 6 h in `plugins/configurations/LetterboxdLog/ratings/<userId>.json`;
+  `refresh=1` reads again at most every 10 minutes; after a failed read Letterboxd is not asked
+  again for that user for 2 minutes. Not linked: `{ linked: false, items: [] }`. Letterboxd
+  unreachable: the cached copy with `stale: true`, otherwise 502 `{ error }`. Unlinking deletes
+  the cache.

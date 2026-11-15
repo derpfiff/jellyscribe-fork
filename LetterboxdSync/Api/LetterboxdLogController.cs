@@ -37,16 +37,20 @@ public sealed class LogAccountRequest
 public class LetterboxdLogController : JellyfinUserApiController
 {
     private readonly LetterboxdLogService _log;
+    private readonly LetterboxdRatingsService _ratings;
     private readonly ILogger<LetterboxdLogController> _logger;
 
-    public LetterboxdLogController(LetterboxdLogService log, IUserManager userManager, ILogger<LetterboxdLogController> logger)
+    public LetterboxdLogController(LetterboxdLogService log, LetterboxdRatingsService ratings, IUserManager userManager, ILogger<LetterboxdLogController> logger)
         : base(userManager)
     {
         _log = log;
+        _ratings = ratings;
         _logger = logger;
     }
 
     private static PluginConfiguration Config => Plugin.Instance!.Configuration;
+
+    private static readonly System.Text.Json.JsonSerializerOptions RatingsJson = new();
 
     /// <summary>Test-only replacement for the official-API sign-in in <see cref="SaveAccount"/>.</summary>
     internal static Func<string, string, Task>? AccountLoginForTesting;
@@ -195,11 +199,46 @@ public class LetterboxdLogController : JellyfinUserApiController
         {
             Config.Accounts.RemoveAll(a => a.UserJellyfinId == userId);
             Plugin.Instance!.SaveConfiguration();
+            _ratings.Forget(userId);
             foreach (var a in mine)
                 AuthBreaker.Reset(userId, a.LetterboxdUsername);
             _logger.LogInformation("LetterboxdLog: user {UserId} unlinked Letterboxd", userId);
         }
         return Ok(AccountState(userId));
+    }
+
+    /// <summary>
+    /// Every film the caller's linked Letterboxd member has rated, liked or marked watched (also the
+    /// ones without a diary entry), from the official API, cached 6 h per user. <c>?refresh=1</c>
+    /// reads again, at most once per 10 minutes. Not linked: 200 with linked=false and no items.
+    /// Letterboxd unreachable: the cached copy with stale=true, or 502 { error } without one.
+    /// </summary>
+    [HttpGet("Ratings")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult> Ratings([FromQuery] string? refresh = null)
+    {
+        var userId = GetCurrentUserId();
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+        var force = refresh is "1" or "true" or "True";
+        var res = await _ratings.GetAsync(userId, force, HttpContext.RequestAborted).ConfigureAwait(false);
+        if (!res.Linked)
+            return Ok(new { linked = false, items = Array.Empty<object>() });
+        if (res.Data == null)
+            return StatusCode(StatusCodes.Status502BadGateway, new { error = res.Error ?? "Letterboxd is not reachable right now. Try again later." });
+        // Own serializer options: Jellyfin's drop null values, but rating: null is part of the contract.
+        return new JsonResult(new
+        {
+            linked = true,
+            username = res.Data.Username,
+            fetchedAt = res.Data.FetchedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture),
+            stale = res.Stale,
+            error = res.Stale ? res.Error : null,
+            truncated = res.Data.Truncated,
+            count = res.Data.Items.Count,
+            items = res.Data.Items.Select(i => new { tmdbId = i.TmdbId, title = i.Title, year = i.Year, rating = i.Rating, liked = i.Liked, watched = i.Watched }),
+        }, RatingsJson);
     }
 
     /// <summary>Admin: per Jellyfin user with a linked account, the account and its entry counts.</summary>
