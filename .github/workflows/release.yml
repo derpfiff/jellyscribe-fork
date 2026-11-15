@@ -1,378 +1,59 @@
+# Veröffentlichen: Version in meta.json anheben, Tag „v<Version>“ pushen (z. B. v2.15.0.125).
+# Baut gegen Jellyfin 12.4, legt das Zip unter dist/ ab, trägt es in manifest.json ein und hängt es an ein GitHub-Release.
 name: Release
-
-# Fires on every push to main and ships whatever version Directory.Build.props
-# says, unless that version is already listed in manifest.json on main.
-#
-# The manifest entry, not the git tag, is the "already shipped" signal. A run
-# that dies after creating the tag/release but before the manifest push used to
-# leave a GitHub release the catalog never listed, and every rerun then saw the
-# tag and stopped. Now:
-#   - manifest lists the version            -> no-op (also covers our own
-#                                              manifest auto-commit)
-#   - tag exists, manifest does not          -> repair: reuse the existing
-#                                              release asset (rebuilding from the
-#                                              tag only if the asset is missing),
-#                                              then write the manifest entry
-#   - neither                                -> normal release
-#
-# Three jobs, so the write token never shares a job with build or test code:
-#   build      (contents: read)  checks out with no stored credentials, builds,
-#                                tests, packages, prepares the release notes,
-#                                and uploads them as an artifact.
-#   live-check (contents: read)  runs the live Letterboxd suite (live-tests.yml)
-#                                against the exact commit build packaged. A new
-#                                release is never published unless it passes.
-#   publish    (contents: write) runs no repository build code: it creates or
-#                                repairs the GitHub release and commits the
-#                                manifest entry.
-#
-# Why live-check runs here instead of waiting for integration.yml: the commit's
-# own Integration run would have to be found and polled, it may not exist (paths
-# filter, collapsed queued runs), and a pending run in integration.yml's shared
-# concurrency group is cancelled when a newer PR run queues behind it. Running
-# the suite in this workflow is deterministic. It deliberately does NOT join the
-# letterboxd-test-account group for the same reason (a cancelled live-check
-# would silently skip the release); integration.yml no longer runs on pushes to
-# main, so it never tests the same commit at the same time. A PR run can still
-# overlap and make a write test flaky: use "Re-run failed jobs", which reruns
-# live-check and then publish.
-#
-# Skip-if-no-secret: when the test credentials are not configured (a fork),
-# live-check passes with a notice. When only LETTERBOXD_TEST_RAW_COOKIES is
-# missing, the scraping tests skip and the run summary says so.
-#
-# Repair mode skips live-check: the tag it repairs was created by a publish job
-# that already needed a passing live-check, and a repair only adds the asset or
-# the manifest entry for a release that is already public.
-#
-# Escape hatch: when letterboxd.com is down, or Letterboxd has revoked the
-# bundled API key (runbook in SECURITY.md), the live suite cannot pass and would
-# block every release. Setting the repository variable RELEASE_LIVE_CHECK to
-# "off" skips live-check and publishes with a warning. Delete it afterwards.
-#
-# Version bumps happen in regular PRs (gated by version-gate.yml). This
-# workflow doesn't decide the version; it just ships whatever the project
-# files say.
-
 on:
   push:
-    branches: [main]
-
-# One release at a time. Two merges a minute apart used to race each other's
-# manifest push; queued runs now wait, and each re-reads main before acting.
-concurrency:
-  group: release
-  cancel-in-progress: false
-
+    tags: ['v*']
+  workflow_dispatch:
 permissions:
-  contents: read
-
+  contents: write
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      mode: ${{ steps.check.outputs.mode }}
-      assembly: ${{ steps.version.outputs.assembly }}
-      tag: ${{ steps.version.outputs.tag }}
-      sha: ${{ steps.ref.outputs.sha }}
-      abi: ${{ steps.ref.outputs.abi }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Read project version
-        id: version
-        run: |
-          set -e
-          ASSEMBLY=$(grep -oE '<AssemblyVersion>[^<]+' Directory.Build.props | head -1 | sed 's/<AssemblyVersion>//')
-          if [ -z "$ASSEMBLY" ]; then
-            echo "::error::Could not read AssemblyVersion from Directory.Build.props"
-            exit 1
-          fi
-          # Tag is vX.Y.Z (strip the trailing .0 from the 4-part AssemblyVersion)
-          TAG="v$(echo "$ASSEMBLY" | sed -E 's/\.0$//')"
-          echo "assembly=$ASSEMBLY" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG"           >> "$GITHUB_OUTPUT"
-          echo "AssemblyVersion: $ASSEMBLY"
-          echo "Tag: $TAG"
-
-      - name: Decide release, repair, or skip
-        id: check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          set -e
-          ASSEMBLY="${{ steps.version.outputs.assembly }}"
-          TAG="${{ steps.version.outputs.tag }}"
-          # Read the manifest from the newest main, not this run's commit: a
-          # queued or rerun job may be older than the auto-commit that listed it.
-          git fetch --quiet origin main
-          if git show origin/main:manifest.json \
-             | jq -e --arg v "$ASSEMBLY" '.[0].versions | any(.version == $v)' > /dev/null; then
-            echo "manifest.json on main already lists $ASSEMBLY; nothing to release."
-            echo "mode=skip" >> "$GITHUB_OUTPUT"
-          elif git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
-            echo "::warning::Tag $TAG exists but manifest.json does not list $ASSEMBLY. Repairing the half-finished release."
-            echo "mode=repair" >> "$GITHUB_OUTPUT"
-            # Rebuild only when the release has no asset to reuse, so a flaky
-            # restore or test cannot block a repair that only needs the manifest.
-            if gh release view "$TAG" --json assets --jq '.assets[].name' 2>/dev/null \
-               | grep -qxF "jellyfin-plugin-letterboxd-${TAG}.zip"; then
-              echo "Release $TAG already has its asset; skipping the rebuild."
-              echo "build=false" >> "$GITHUB_OUTPUT"
-            else
-              echo "build=true" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "mode=release" >> "$GITHUB_OUTPUT"
-            echo "build=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Select the commit to build
-        id: ref
-        if: steps.check.outputs.mode != 'skip'
-        run: |
-          set -e
-          TAG="${{ steps.version.outputs.tag }}"
-          if [ "${{ steps.check.outputs.mode }}" = "repair" ]; then
-            # Rebuild what the tag points at, so a missing asset is replaced by
-            # the same source the release was cut from.
-            git fetch --quiet --force origin "refs/tags/$TAG:refs/tags/$TAG"
-            git checkout --quiet --detach "refs/tags/$TAG"
-          fi
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          if [ -f targetAbi.txt ]; then
-            ABI=$(tr -d '[:space:]' < targetAbi.txt)
-          else
-            ABI=$(jq -r '.[0].versions[0].targetAbi // "10.11.0.0"' manifest.json)
-          fi
-          echo "abi=$ABI" >> "$GITHUB_OUTPUT"
-          echo "Building $(git rev-parse HEAD), targetAbi $ABI"
-
-      - name: Verify csproj matches Directory.Build.props
-        if: steps.check.outputs.mode != 'skip'
-        run: |
-          set -e
-          ASSEMBLY="${{ steps.version.outputs.assembly }}"
-          CSPROJ=$(grep -oE '<AssemblyVersion>[^<]+' LetterboxdSync/LetterboxdSync.csproj | head -1 | sed 's/<AssemblyVersion>//')
-          if [ "$CSPROJ" != "$ASSEMBLY" ]; then
-            echo "::error::LetterboxdSync.csproj AssemblyVersion ($CSPROJ) does not match Directory.Build.props ($ASSEMBLY). version-gate.yml should have caught this on the PR."
-            exit 1
-          fi
-
-      - name: Extract release body
-        if: steps.check.outputs.mode != 'skip'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          set -e
-          mkdir -p dist
-          # Repair: the release already carries the notes it shipped with. They
-          # may have been edited on GitHub since, so they are cleaned and capped
-          # again before they reach manifest.json.
-          if [ "${{ steps.check.outputs.mode }}" = "repair" ] \
-             && gh release view "$TAG" --json body --jq .body > /tmp/existing-body.txt 2>/dev/null \
-             && [ -s /tmp/existing-body.txt ]; then
-            echo "Using the existing release body for $TAG"
-            # Repair has the tag checked out, which may predate the script, so
-            # run main's copy.
-            git show origin/main:.github/scripts/release_notes.py > /tmp/release_notes.py
-            python3 /tmp/release_notes.py --clean /tmp/existing-body.txt dist/release-body.txt
-          else
-            # Every version bump above the newest shipped version contributes its
-            # PR's "## Release notes", oldest first. Usually that is one PR; a
-            # gh stack merge can bring several in one push, and only the newest
-            # version is released (see .github/scripts/release_notes.py).
-            git show origin/main:manifest.json > /tmp/manifest-main.json
-            python3 .github/scripts/release_notes.py /tmp/manifest-main.json dist/release-body.txt
-          fi
-          echo "--- release body preview ---"
-          head -c 800 dist/release-body.txt
-          echo
-
-      - name: Setup .NET
-        if: steps.check.outputs.build == 'true'
-        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
-        with:
-          dotnet-version: '9.0.x'
-
-      - name: Restore
-        if: steps.check.outputs.build == 'true'
-        run: dotnet restore
-
-      - name: Build
-        if: steps.check.outputs.build == 'true'
-        run: dotnet build -c Release --no-restore
-
-      - name: Test
-        if: steps.check.outputs.build == 'true'
-        run: dotnet test -c Release --no-build --verbosity normal --filter "Category!=Integration"
-
-      - name: Package
-        if: steps.check.outputs.build == 'true'
-        run: |
-          set -e
-          ZIP="$GITHUB_WORKSPACE/dist/jellyfin-plugin-letterboxd-${{ steps.version.outputs.tag }}.zip"
-          cd LetterboxdSync/bin/Release/net9.0
-          zip -j "$ZIP" Jellyscribe.dll HtmlAgilityPack.dll
-
-      - name: Upload release files
-        if: steps.check.outputs.mode != 'skip'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: release
-          path: dist/
-          if-no-files-found: error
-          retention-days: 7
-
-  live-check:
-    needs: build
-    if: needs.build.outputs.mode == 'release' && vars.RELEASE_LIVE_CHECK != 'off'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/live-tests.yml
-    with:
-      ref: ${{ needs.build.outputs.sha }}
-    secrets:
-      LETTERBOXD_TEST_USERNAME: ${{ secrets.LETTERBOXD_TEST_USERNAME }}
-      LETTERBOXD_TEST_PASSWORD: ${{ secrets.LETTERBOXD_TEST_PASSWORD }}
-      LETTERBOXD_TEST_RAW_COOKIES: ${{ secrets.LETTERBOXD_TEST_RAW_COOKIES }}
-      LETTERBOXD_TEST_USER_AGENT: ${{ secrets.LETTERBOXD_TEST_USER_AGENT }}
-
-  publish:
-    needs: [build, live-check]
-    # A new release needs a passing live-check; it may go ahead with live-check
-    # skipped only for a repair or with the RELEASE_LIVE_CHECK=off escape hatch.
-    # !cancelled() lets this job evaluate when live-check is skipped.
-    if: >-
-      !cancelled()
-      && needs.build.result == 'success'
-      && (
-        (needs.build.outputs.mode == 'release'
-          && (needs.live-check.result == 'success'
-            || (needs.live-check.result == 'skipped' && vars.RELEASE_LIVE_CHECK == 'off')))
-        || (needs.build.outputs.mode == 'repair' && needs.live-check.result == 'skipped')
-      )
-    runs-on: ubuntu-latest
-    # The release environment holds RELEASE_DEPLOY_KEY and only deploys from main,
-    # so no job on another branch can read the key.
-    environment: release
-    permissions:
-      contents: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_REPO: ${{ github.repository }}
-      ASSEMBLY: ${{ needs.build.outputs.assembly }}
-      TAG: ${{ needs.build.outputs.tag }}
-      BUILT_SHA: ${{ needs.build.outputs.sha }}
-      ABI: ${{ needs.build.outputs.abi }}
-    steps:
-      - name: Warn when the live check was bypassed
-        if: needs.build.outputs.mode == 'release' && needs.live-check.result == 'skipped'
-        run: echo "::warning::RELEASE_LIVE_CHECK is off, so $TAG is published without the live Letterboxd tests. Delete the repository variable once Letterboxd is reachable again."
-
-      - name: Warn when the live check had no credentials
-        if: needs.live-check.result == 'success' && needs.live-check.outputs.ran != 'true'
-        run: echo "::warning::The Letterboxd test secrets are not configured, so live-check passed without running anything and $TAG is published untested against letterboxd.com."
-
-      # This job never runs dotnet, npm, or any script from the repository. It
-      # checks out main only to edit manifest.json and push it. The push goes over
-      # SSH as the release deploy key, the only actor the main ruleset lets push
-      # without a pull request (see CLAUDE.md, "Merge gates on main"). Unlike a
-      # GITHUB_TOKEN push, it starts workflows: this one again (it sees the version
-      # in manifest.json and stops), ci.yml, and deploy-docs.yml.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
         with:
           ref: main
-          fetch-depth: 0
-          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
-
-      - name: Download release files
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      - name: Jellyfin-12.4-Dateien aus dem offiziellen Image holen
+        run: |
+          mkdir -p lib
+          id=$(docker create ghcr.io/jellyfin/jellyfin:12.4)
+          for f in MediaBrowser.Common MediaBrowser.Controller MediaBrowser.Model Jellyfin.Data Jellyfin.Database.Implementations Jellyfin.Extensions Newtonsoft.Json; do docker cp "$id:/jellyfin/$f.dll" lib/; done
+          docker rm "$id"
+      - uses: actions/setup-dotnet@v4
         with:
-          name: release
-          path: /tmp/release
-
-      - name: Create or repair the GitHub Release
-        id: cs
+          dotnet-version: '10.0.x'
+      - name: Bauen
+        run: dotnet build LetterboxdSync/LetterboxdSync.csproj -c Release -o out
+      - name: Zip und Katalog
+        id: pack
         run: |
-          set -e
-          ASSET="jellyfin-plugin-letterboxd-${TAG}.zip"
-          if ! gh release view "$TAG" > /dev/null 2>&1; then
-            echo "Creating release $TAG at $BUILT_SHA"
-            # --target pins a new tag to the commit that was built and tested,
-            # not whatever main is by the time this job runs.
-            gh release create "$TAG" "/tmp/release/$ASSET" \
-              --title "$TAG" --notes-file /tmp/release/release-body.txt --target "$BUILT_SHA"
-          elif ! gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qxF "$ASSET"; then
-            echo "Release $TAG exists without $ASSET; uploading the rebuilt asset"
-            gh release upload "$TAG" "/tmp/release/$ASSET"
-          else
-            echo "Release $TAG already has $ASSET; keeping it"
-          fi
-          # Checksum whatever is actually published, so a repair run never
-          # advertises the md5 of a rebuild the release does not serve.
-          mkdir -p /tmp/published
-          gh release download "$TAG" --pattern "$ASSET" --dir /tmp/published --clobber
-          CS=$(md5sum "/tmp/published/$ASSET" | awk '{print $1}')
-          echo "checksum=$CS" >> "$GITHUB_OUTPUT"
-          echo "Published checksum: $CS"
-
-      - name: Insert manifest entry and push
-        # Manifest is CI-managed: only release.yml writes to it. Each attempt
-        # resets to the newest main and redoes the edit, so a commit landing on
-        # main mid-run costs a retry instead of a rejected push.
-        env:
-          CS: ${{ steps.cs.outputs.checksum }}
+          python3 - <<'PY'
+          import json, hashlib, zipfile, datetime, os
+          meta = json.load(open('meta.json')); ver = meta['version']
+          os.makedirs('dist', exist_ok=True)
+          zp = 'dist/jellyscribe-fork_%s.zip' % ver
+          with zipfile.ZipFile(zp, 'w', zipfile.ZIP_DEFLATED) as z:
+              for name, src in [('Jellyscribe.dll', 'out/Jellyscribe.dll'), ('HtmlAgilityPack.dll', 'out/HtmlAgilityPack.dll'), ('meta.json', 'meta.json')]:
+                  info = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0)); info.compress_type = zipfile.ZIP_DEFLATED; info.external_attr = 0o644 << 16
+                  z.writestr(info, open(src, 'rb').read())
+          md5 = hashlib.md5(open(zp, 'rb').read()).hexdigest()
+          m = json.load(open('manifest.json'))
+          entry = {'version': ver, 'changelog': 'Siehe CHANGES-JELLYFIN-12.4.md.', 'targetAbi': '12.4.0.0',
+                   'sourceUrl': 'https://raw.githubusercontent.com/%s/main/%s' % (os.environ['GITHUB_REPOSITORY'], zp),
+                   'checksum': md5, 'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
+          m[0]['versions'] = [entry] + [v for v in m[0]['versions'] if v['version'] != ver]
+          json.dump(m, open('manifest.json', 'w'), indent=2, ensure_ascii=False); open('manifest.json', 'a').write('\n')
+          open(os.environ['GITHUB_OUTPUT'], 'a').write('zip=%s\nver=%s\n' % (zp, ver))
+          PY
+      - name: Ins Repository übernehmen
         run: |
-          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # sourceUrl routes through the lbsync-telemetry Worker (GET /dl/<tag>/...),
-          # which 302s to the real GitHub asset below and counts the download as a
-          # unique-install signal. The release asset itself still lives on GitHub.
-          URL="https://lbsync-telemetry.lachlanbyoung.workers.dev/dl/${TAG}/jellyfin-plugin-letterboxd-${TAG}.zip"
-          CHANGELOG=$(cat /tmp/release/release-body.txt)
-          echo "targetAbi for this release: $ABI"
-
-          for attempt in 1 2 3 4 5; do
-            git fetch --quiet origin main
-            git reset --quiet --hard origin/main
-            if jq -e --arg v "$ASSEMBLY" '.[0].versions | any(.version == $v)' manifest.json > /dev/null; then
-              echo "manifest.json on main already lists $ASSEMBLY; nothing to push."
-              exit 0
-            fi
-            TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-            # Kept newest-first by version, so a late re-run of an older release
-            # (see the superseded-run warning in the build job) lands in order.
-            echo "Inserting new $ASSEMBLY entry into the manifest"
-            jq --arg v "$ASSEMBLY" --arg cs "$CS" --arg url "$URL" --arg ts "$TS" --arg cl "$CHANGELOG" --arg abi "$ABI" \
-              '.[0].versions = ([{
-                version: $v,
-                changelog: $cl,
-                targetAbi: $abi,
-                sourceUrl: $url,
-                checksum: $cs,
-                timestamp: $ts
-              }] + .[0].versions | sort_by(.version | split(".") | map(tonumber)) | reverse)' \
-              manifest.json > manifest.tmp
-            mv manifest.tmp manifest.json
-            git add manifest.json
-            git commit --quiet -m "Release ${TAG} (manifest auto-update)"
-            if git push origin HEAD:main; then
-              echo "Pushed manifest entry for $ASSEMBLY"
-              exit 0
-            fi
-            echo "::warning::Push attempt $attempt was rejected (main moved); retrying."
-            sleep $((attempt * 5))
-          done
-          echo "::error::Could not push the manifest entry after 5 attempts. Rerun this workflow: it will repair the release."
-          exit 1
+          git add manifest.json "${{ steps.pack.outputs.zip }}"
+          git diff --cached --quiet || git commit -m "${{ steps.pack.outputs.ver }}: Zip und Katalog"
+          git push origin HEAD:main
+      - name: GitHub-Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v${{ steps.pack.outputs.ver }}" "${{ steps.pack.outputs.zip }}" --title "${{ steps.pack.outputs.ver }}" --notes "Jellyfin-12.4-Fork, siehe CHANGES-JELLYFIN-12.4.md." || gh release upload "v${{ steps.pack.outputs.ver }}" "${{ steps.pack.outputs.zip }}" --clobber

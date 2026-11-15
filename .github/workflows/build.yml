@@ -1,0 +1,24 @@
+# Bau-Check für den Jellyfin-12.4-Fork: gebaut wird gegen die Server-Dateien aus dem offiziellen Jellyfin-Image.
+name: Build (Jellyfin 12.4)
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Jellyfin-12.4-Dateien aus dem offiziellen Image holen
+        run: |
+          mkdir -p lib
+          id=$(docker create ghcr.io/jellyfin/jellyfin:12.4)
+          for f in MediaBrowser.Common MediaBrowser.Controller MediaBrowser.Model Jellyfin.Data Jellyfin.Database.Implementations Jellyfin.Extensions Newtonsoft.Json; do docker cp "$id:/jellyfin/$f.dll" lib/; done
+          docker rm "$id"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Bauen
+        run: dotnet build LetterboxdSync/LetterboxdSync.csproj -c Release -o out
+      - name: Katalog prüfen
+        run: python3 -c "import json; m=json.load(open('manifest.json')); assert m[0]['versions'][0]['targetAbi'].startswith('12.4'); print(m[0]['name'], m[0]['versions'][0]['version'])"

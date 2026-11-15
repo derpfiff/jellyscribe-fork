@@ -10,7 +10,7 @@ Plugin-Katalog für Jellyfin: `https://raw.githubusercontent.com/derpfiff/jellys
 
 Einrichten: Jellyscribe in der Seitenleiste öffnen, Letterboxd-Konto verknüpfen und einschalten. Details zu den Änderungen: [CHANGES-JELLYFIN-12.4.md](CHANGES-JELLYFIN-12.4.md). Hinweis: Das Plugin nutzt wie das Original dessen eingebaute Zugangsschlüssel für Letterboxds Schnittstelle.
 
-Bauen: `build.sh` (braucht die Jellyfin-12.4-Server-DLLs in `lib/`).
+Bauen: `build.sh` (braucht die Jellyfin-12.4-Server-DLLs in `lib/`); GitHub baut bei jedem Push gegen das offizielle 12.4-Image. Veröffentlichen: Version in `meta.json` anheben und Tag `v<Version>` pushen.
 
 ---
 

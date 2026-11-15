@@ -80,7 +80,7 @@ called from three places:
   When it fails it opens one issue labelled `live-check-failure`, or comments
   on the one already open, with a link to the run.
 - `release.yml`, against the exact commit about to be shipped. A release is
-  not published unless the suite passes (see CLAUDE.md, Releasing).
+  not published unless the suite passes.
 
 Credentials come from repository secrets. The default `ci.yml` workflow
 filters integration tests out so the unit run stays the fast-feedback path.
@@ -102,4 +102,4 @@ Cloudflare refuses the website sign-in from CI without browser cookies. Without
 it they skip on GitHub Actions with a message naming the variable (local runs
 still try the plain sign-in), and every run's summary says
 whether the scraping path was covered. How to refresh the cookie, and why it
-may still be refused from a GitHub runner: CLAUDE.md, Build & Test.
+may still be refused from a GitHub runner (see the upstream repository).
