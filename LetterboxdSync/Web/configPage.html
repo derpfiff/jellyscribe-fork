@@ -44,8 +44,8 @@
 
                 <div class="lbx">
                     <div class="lbx-eyebrow">Jellyscribe</div>
-                    <h1>Letterboxd-Konten</h1>
-                    <p class="lbx-intro">Wer sein Letterboxd-Konto verknüpft hat und wie viele Einträge noch auf Letterboxd warten. Verknüpft wird in Cinema Glass unter „Dein Geschmack“; Einträge entstehen nur dort beim „Speichern“.</p>
+                    <h1 data-en="Letterboxd accounts">Letterboxd-Konten</h1>
+                    <p class="lbx-intro" data-en="Who has linked a Letterboxd account, and how many entries are still waiting to go to Letterboxd. Accounts are linked in Cinema Glass under “Your Taste”; entries are only created there when you press “Save”.">Wer sein Letterboxd-Konto verknüpft hat und wie viele Einträge noch auf Letterboxd warten. Verknüpft wird in Cinema Glass unter „Dein Geschmack“; Einträge entstehen nur dort beim „Speichern“.</p>
                     <section class="lbx-panel" id="lbxUsers">
                         <div class="lbx-user"><div class="lbx-ava"></div><div class="lbx-user__main"><span class="lbx-ph" style="width:30%;height:16px;"></span><span class="lbx-ph" style="width:20%;margin-top:10px;"></span></div></div>
                     </section>
@@ -58,6 +58,32 @@
                     if (!root) return;
                     var box = root.querySelector('#lbxUsers');
                     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+                    // Sprache: Jellyfin setzt <html lang> aus der Anzeigesprache (auto = Browser). de* -> Deutsch, sonst Englisch.
+                    // Deutsch steht im Markup; data-en / data-en-<attr> tragen die englische Fassung, beim Anzeigen getauscht.
+                    function isDe() { return /^de/i.test(document.documentElement.lang || navigator.language || ''); }
+                    function tr(de, en) { return isDe() ? de : en; }
+                    function applyLang(root) {
+                      var en = !isDe();
+                      Array.prototype.forEach.call(root.querySelectorAll('[data-en]'), function (el) {
+                        var v = el.getAttribute('data-en');
+                        if (v.indexOf('<') >= 0 || !el.children.length) {
+                          if (!el.hasAttribute('data-de')) el.setAttribute('data-de', el.innerHTML);
+                          el.innerHTML = en ? v : el.getAttribute('data-de');
+                        } else {
+                          var n = el.lastChild;
+                          while (n && !(n.nodeType === 3 && n.nodeValue.trim())) n = n.previousSibling;
+                          if (!n) return;
+                          if (!el.hasAttribute('data-de')) el.setAttribute('data-de', n.nodeValue);
+                          n.nodeValue = en ? v : el.getAttribute('data-de');
+                        }
+                      });
+                      ['placeholder', 'title', 'aria-label', 'label'].forEach(function (a) {
+                        Array.prototype.forEach.call(root.querySelectorAll('[data-en-' + a + ']'), function (el) {
+                          if (!el.hasAttribute('data-de-' + a)) el.setAttribute('data-de-' + a, el.getAttribute(a) || '');
+                          el.setAttribute(a, en ? el.getAttribute('data-en-' + a) : el.getAttribute('data-de-' + a));
+                        });
+                      });
+                    }
                     function hex(id) { return String(id || '').replace(/-/g, '').toLowerCase(); }
                     function avatar(u, name) {
                         var img = u && u.PrimaryImageTag ? '<img alt="" src="' + esc(ApiClient.getUrl('Users/' + u.Id + '/Images/Primary', { tag: u.PrimaryImageTag, maxHeight: 96 })) + '" onerror="this.remove()">' : '';
@@ -67,26 +93,29 @@
                         var byId = {}; users.forEach(function (u) { byId[hex(u.Id)] = u; });
                         rows.forEach(function (r) { r.name = (byId[hex(r.userId)] || {}).Name || hex(r.userId).slice(0, 8); });
                         rows.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; });
-                        if (!rows.length) { box.innerHTML = '<div class="lbx-empty"><b>Noch niemand verknüpft</b>Sobald jemand in Cinema Glass sein Letterboxd-Konto verknüpft, erscheint es hier.</div>'; return; }
+                        if (!rows.length) { box.innerHTML = '<div class="lbx-empty">' + tr('<b>Noch niemand verknüpft</b>Sobald jemand in Cinema Glass sein Letterboxd-Konto verknüpft, erscheint es hier.', '<b>No linked accounts yet</b>When someone links their Letterboxd account in Cinema Glass, it shows up here.') + '</div>'; return; }
                         box.innerHTML = rows.map(function (r) {
                             var tags = ['<span>@' + esc(r.username) + '</span>'];
-                            if (!r.enabled) tags.push('<span class="lbx-tag">Senden aus</span>');
-                            if (!r.hasLogin) tags.push('<span class="lbx-tag">Keine Anmeldung</span>');
-                            if (r.loginFailing) tags.push('<span class="lbx-tag is-alert">Anmeldung scheitert</span>');
-                            var q = r.queued || 0, extra = [(r.posted || 0) + ' eingetragen'];
-                            if (r.errors) extra.push(r.errors + ' Fehler');
+                            if (!r.enabled) tags.push('<span class="lbx-tag">' + tr('Senden aus', 'Sending off') + '</span>');
+                            if (!r.hasLogin) tags.push('<span class="lbx-tag">' + tr('Keine Anmeldung', 'No login') + '</span>');
+                            if (r.loginFailing) tags.push('<span class="lbx-tag is-alert">' + tr('Anmeldung scheitert', 'Login failing') + '</span>');
+                            var q = r.queued || 0, extra = [(r.posted || 0) + tr(' eingetragen', ' logged')];
+                            if (r.errors) extra.push(r.errors + tr(' Fehler', r.errors === 1 ? ' error' : ' errors'));
                             return '<div class="lbx-user">' + avatar(byId[hex(r.userId)], r.name) +
                                 '<div class="lbx-user__main"><div class="lbx-user__name">' + esc(r.name) + '</div><div class="lbx-user__sub">' + tags.join('') + '</div></div>' +
-                                '<div class="lbx-count"><b' + (q ? '' : ' class="is-zero"') + '>' + q + '</b><span>wartend</span><small>' + esc(extra.join(' · ')) + '</small></div></div>';
+                                '<div class="lbx-count"><b' + (q ? '' : ' class="is-zero"') + '>' + q + '</b><span>' + tr('wartend', 'waiting') + '</span><small>' + esc(extra.join(' · ')) + '</small></div></div>';
                         }).join('');
                     }
                     function load() {
+                        applyLang(root);
                         Promise.all([ApiClient.getUsers(), ApiClient.getJSON(ApiClient.getUrl('LetterboxdLog/Overview'))]).then(function (r) {
                             render(r[0] || [], r[1] || []);
-                        }, function () { box.innerHTML = '<div class="lbx-empty"><b>Konnte nicht geladen werden.</b></div>'; });
+                        }, function () { box.innerHTML = '<div class="lbx-empty"><b>' + tr('Konnte nicht geladen werden.', 'Couldn’t load accounts.') + '</b></div>'; });
                     }
                     if (window.ApiClient) load();
                     else root.addEventListener('pageshow', load, { once: true });
+                    // Bei jedem erneuten Anzeigen die feste Beschriftung der aktuellen Sprache anpassen.
+                    root.addEventListener('pageshow', function () { applyLang(root); });
                 })();
                 </script>
             </div>

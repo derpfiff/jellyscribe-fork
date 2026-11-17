@@ -112,7 +112,7 @@
                     var root = (me && (me.closest('#letterboxdUserPage') || (me.parentNode && me.parentNode.querySelector('#letterboxdUserPage')))) || document.getElementById('letterboxdUserPage');
                     if (!root) return;
                     function $(id) { return root.querySelector('#' + id); }
-                    var EN = /^en/i.test(document.documentElement.lang || '');
+                    var EN = !/^de/i.test(document.documentElement.lang || navigator.language || 'de');
                     var L = {
                         title: ['Letterboxd-Konto', 'Letterboxd account'],
                         intro: ['Einträge entstehen nur, wenn du in Cinema Glass „Speichern“ drückst. Nichts wird automatisch übertragen.', 'Entries are only created when you press “Save” in Cinema Glass. Nothing is sent automatically.'],

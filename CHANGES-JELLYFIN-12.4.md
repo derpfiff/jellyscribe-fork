@@ -1,7 +1,7 @@
 # Changes in this fork (Jellyfin 12.4 build)
 
 Based on builtbyproxy/jellyfin-plugin-letterboxd ("Jellyscribe") v2.15.0, commit 7bdd2b61,
-MIT licence (see LICENSE, unchanged). Version 2.15.0.126.
+MIT licence (see LICENSE, unchanged). Version 2.15.0.127.
 
 - Build: net10.0, compiled against the Jellyfin 12.4 server assemblies in `lib/` instead of the
   10.11 NuGet packages; DataProtection from the ASP.NET Core shared framework. `build.sh` builds
@@ -33,6 +33,7 @@ MIT licence (see LICENSE, unchanged). Version 2.15.0.126.
   counts. `configPage.html` (admin) and `userPage.html` (unlinked fallback) rewritten as minimal
   pages in the Cinema Glass look; sync, watchlist, Seerr, Serializd, telemetry, import, cookie and
   log screens are gone from the UI, their endpoints are unchanged.
+- 2.15.0.127: settings page and account page follow Jellyfin's display language (German for de-*, English otherwise).
 - 2.15.0.126: `GET /LetterboxdLog/Ratings[?refresh=1]` (caller's own token) returns every film the
   linked member rated, liked or marked watched, also without a diary entry:
   `{ linked, username, fetchedAt, stale, error, truncated, count, items: [{ tmdbId, title, year,
