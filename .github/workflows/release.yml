@@ -34,12 +34,14 @@ jobs:
           os.makedirs('dist', exist_ok=True)
           zp = 'dist/jellyscribe-fork_%s.zip' % ver
           with zipfile.ZipFile(zp, 'w', zipfile.ZIP_DEFLATED) as z:
-              for name, src in [('Jellyscribe.dll', 'out/Jellyscribe.dll'), ('HtmlAgilityPack.dll', 'out/HtmlAgilityPack.dll'), ('meta.json', 'meta.json')]:
+              for name, src in [('Jellyscribe.dll', 'out/Jellyscribe.dll'), ('HtmlAgilityPack.dll', 'out/HtmlAgilityPack.dll'), ('meta.json', 'meta.json'), ('whatsnew.json', 'whatsnew.json')]:
                   info = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0)); info.compress_type = zipfile.ZIP_DEFLATED; info.external_attr = 0o644 << 16
                   z.writestr(info, open(src, 'rb').read())
           md5 = hashlib.md5(open(zp, 'rb').read()).hexdigest()
           m = json.load(open('manifest.json'))
-          entry = {'version': ver, 'changelog': 'Siehe CHANGES-JELLYFIN-12.4.md.', 'targetAbi': '12.4.0.0',
+          norm = lambda v: tuple((list(map(int, v.split('.'))) + [0, 0, 0, 0])[:4])
+          notes = [i['de'][0] + ': ' + i['de'][1] for e in json.load(open('whatsnew.json')) if norm(e['version']) == norm(ver) for i in e.get('items', [])]
+          entry = {'version': ver, 'changelog': '\n'.join('- ' + n for n in notes) or 'Siehe CHANGES-JELLYFIN-12.4.md.', 'targetAbi': '12.4.0.0',
                    'sourceUrl': 'https://raw.githubusercontent.com/%s/main/%s' % (os.environ['GITHUB_REPOSITORY'], zp),
                    'checksum': md5, 'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
           m[0]['versions'] = [entry] + [v for v in m[0]['versions'] if v['version'] != ver]

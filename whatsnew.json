@@ -1,0 +1,20 @@
+[
+  {
+    "version": "2.15.0.127",
+    "date": "2026-11-17",
+    "admin": true,
+    "items": [
+      {
+        "icon": "globe",
+        "de": [
+          "Einstellungen auf Englisch",
+          "Einstellungs- und Kontoseite folgen jetzt Jellyfins Sprache."
+        ],
+        "en": [
+          "Settings in English",
+          "The settings and account pages now follow Jellyfin's language."
+        ]
+      }
+    ]
+  }
+]

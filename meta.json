@@ -1,6 +1,6 @@
 {
   "category": "General",
-  "changelog": "Jellyfin 12.4 fork of Jellyscribe 2.15.0: built for Jellyfin 12.4/.NET 10; no automatic posting (play events, rating pushes, scheduled sync disabled); new LetterboxdLog API (Status/Entry/Entries) for explicitly confirmed diary entries with offline queue and update-instead-of-duplicate; no upstream repository injection. 2.15.0.125: no sidebar/user-menu entry; account API (GET/POST/DELETE LetterboxdLog/Account) for Cinema Glass; minimal admin page listing linked users and waiting entries. 2.15.0.127: GET LetterboxdLog/Ratings returns all films the linked member rated, liked or watched (official API, cached 6 h per user).",
+  "changelog": "Jellyfin 12.4 fork of Jellyscribe 2.15.0: built for Jellyfin 12.4/.NET 10; no automatic posting (play events, rating pushes, scheduled sync disabled); new LetterboxdLog API (Status/Entry/Entries) for explicitly confirmed diary entries with offline queue and update-instead-of-duplicate; no upstream repository injection. 2.15.0.125: no sidebar/user-menu entry; account API (GET/POST/DELETE LetterboxdLog/Account) for Cinema Glass; minimal admin page listing linked users and waiting entries. 2.15.0.128: GET LetterboxdLog/Ratings returns all films the linked member rated, liked or watched (official API, cached 6 h per user).",
   "description": "Syncs Jellyfin watch history to Letterboxd (fork of builtbyproxy/jellyfin-plugin-letterboxd, MIT).",
   "guid": "c7a3e1b9-5d42-4f8a-9c06-2b7d8e4f1a35",
   "name": "Jellyscribe",
@@ -8,7 +8,7 @@
   "owner": "builtbyproxy (fork)",
   "targetAbi": "12.4.0.0",
   "timestamp": "2026-11-15T00:00:00.0000000Z",
-  "version": "2.15.0.127",
+  "version": "2.15.0.128",
   "status": "Active",
   "autoUpdate": false,
   "assemblies": [

@@ -7,8 +7,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>2.15.0.127</AssemblyVersion>
-    <FileVersion>2.15.0.127</FileVersion>
+    <AssemblyVersion>2.15.0.128</AssemblyVersion>
+    <FileVersion>2.15.0.128</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
