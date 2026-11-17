@@ -1,5 +1,5 @@
 # Veröffentlichen: Version in meta.json anheben, Tag „v<Version>“ pushen (z. B. v2.15.0.125).
-# Baut gegen Jellyfin 12.4, legt das Zip unter dist/ ab, trägt es in manifest.json ein und hängt es an ein GitHub-Release.
+# Baut gegen Jellyfin 12.4, legt das Zip unter dist/ ab, trägt es in den Staging-Katalog manifest-staging.json ein (Freigabe: promote.py im Katalog-Repository) und hängt es an ein GitHub-Release.
 name: Release
 on:
   push:
@@ -38,24 +38,24 @@ jobs:
                   info = zipfile.ZipInfo(name, (2026, 1, 1, 0, 0, 0)); info.compress_type = zipfile.ZIP_DEFLATED; info.external_attr = 0o644 << 16
                   z.writestr(info, open(src, 'rb').read())
           md5 = hashlib.md5(open(zp, 'rb').read()).hexdigest()
-          m = json.load(open('manifest.json'))
+          m = json.load(open('manifest-staging.json')) if os.path.exists('manifest-staging.json') else [dict(json.load(open('manifest.json'))[0], versions=[])]
           norm = lambda v: tuple((list(map(int, v.split('.'))) + [0, 0, 0, 0])[:4])
           notes = [i['de'][0] + ': ' + i['de'][1] for e in json.load(open('whatsnew.json')) if norm(e['version']) == norm(ver) for i in e.get('items', [])]
           entry = {'version': ver, 'changelog': '\n'.join('- ' + n for n in notes) or 'Siehe CHANGES-JELLYFIN-12.4.md.', 'targetAbi': '12.4.0.0',
                    'sourceUrl': 'https://raw.githubusercontent.com/%s/main/%s' % (os.environ['GITHUB_REPOSITORY'], zp),
                    'checksum': md5, 'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}
           m[0]['versions'] = [entry] + [v for v in m[0]['versions'] if v['version'] != ver]
-          json.dump(m, open('manifest.json', 'w'), indent=2, ensure_ascii=False); open('manifest.json', 'a').write('\n')
+          json.dump(m, open('manifest-staging.json', 'w'), indent=2, ensure_ascii=False); open('manifest-staging.json', 'a').write('\n')
           open(os.environ['GITHUB_OUTPUT'], 'a').write('zip=%s\nver=%s\n' % (zp, ver))
           PY
       - name: Ins Repository übernehmen
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add manifest.json "${{ steps.pack.outputs.zip }}"
+          git add manifest-staging.json "${{ steps.pack.outputs.zip }}"
           git diff --cached --quiet || git commit -m "${{ steps.pack.outputs.ver }}: Zip und Katalog"
           git push origin HEAD:main
       - name: GitHub-Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "v${{ steps.pack.outputs.ver }}" "${{ steps.pack.outputs.zip }}" --title "${{ steps.pack.outputs.ver }}" --notes "Jellyfin-12.4-Fork, siehe CHANGES-JELLYFIN-12.4.md." || gh release upload "v${{ steps.pack.outputs.ver }}" "${{ steps.pack.outputs.zip }}" --clobber
+        run: gh release create "v${{ steps.pack.outputs.ver }}" "${{ steps.pack.outputs.zip }}" --title "${{ steps.pack.outputs.ver }}" --prerelease --notes "Jellyfin-12.4-Fork, siehe CHANGES-JELLYFIN-12.4.md. Staging: erst nach Freigabe im Katalog." || gh release upload "v${{ steps.pack.outputs.ver }}" "${{ steps.pack.outputs.zip }}" --clobber
