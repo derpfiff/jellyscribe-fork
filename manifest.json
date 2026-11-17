@@ -9,7 +9,7 @@
     "versions": [
       {
         "version": "2.15.0.128",
-        "changelog": "Siehe CHANGES-JELLYFIN-12.4.md.",
+        "changelog": "- Release Notes im Paket: Cinema Glass zeigt nach einem Update einmal, was neu ist.",
         "targetAbi": "12.4.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/derpfiff/jellyscribe-fork/main/dist/jellyscribe-fork_2.15.0.128.zip",
         "checksum": "3f99c34c5ad24ab1c6fa80a0e022a594",
@@ -17,7 +17,7 @@
       },
       {
         "version": "2.15.0.127",
-        "changelog": "Siehe CHANGES-JELLYFIN-12.4.md.",
+        "changelog": "- Einstellungen auf Englisch: Einstellungs- und Kontoseite folgen jetzt Jellyfins Sprache.",
         "targetAbi": "12.4.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/derpfiff/jellyscribe-fork/main/dist/jellyscribe-fork_2.15.0.127.zip",
         "checksum": "1b18cf6b45f9c553ad762d4cf9c7bbcd",
@@ -25,7 +25,7 @@
       },
       {
         "version": "2.15.0.126",
-        "changelog": "Siehe CHANGES-JELLYFIN-12.4.md.",
+        "changelog": "- Deine Letterboxd-Bewertungen: Cinema Glass kennt jetzt auch Filme, die du auf Letterboxd bewertet, gelikt oder als gesehen markiert hast – auch ohne Tagebucheintrag.",
         "targetAbi": "12.4.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/derpfiff/jellyscribe-fork/main/dist/jellyscribe-fork_2.15.0.126.zip",
         "checksum": "b224ee5ebafbeac38c97bd9121bd9e4a",
@@ -33,7 +33,7 @@
       },
       {
         "version": "2.15.0.125",
-        "changelog": "Siehe CHANGES-JELLYFIN-12.4.md.",
+        "changelog": "- Im Look von Cinema Glass: Konto- und Einstellungsseite sind schlicht und passen zu Cinema Glass.\n- Konto in Cinema Glass verbinden: Du meldest dich direkt in Cinema Glass bei Letterboxd an; eine falsche Anmeldung wird sofort gemeldet.\n- Aufgeräumtes Menü: Kein eigener Eintrag mehr in Seitenleiste und Benutzermenü.",
         "targetAbi": "12.4.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/derpfiff/jellyscribe-fork/main/dist/jellyscribe-fork_2.15.0.125.zip",
         "checksum": "c877e191df49eca70dc7196fb28dd77d",
@@ -41,7 +41,7 @@
       },
       {
         "version": "2.15.0.124",
-        "changelog": "Siehe CHANGES-JELLYFIN-12.4.md.",
+        "changelog": "- Fork für Jellyfin 12.4: Nichts wird mehr automatisch zu Letterboxd geschickt – ein Eintrag entsteht nur, wenn du im Bewertungsdialog von Cinema Glass auf „Speichern“ drückst.\n- Warteschlange bei Ausfällen: Ist Letterboxd nicht erreichbar, wird dein Eintrag gemerkt und später nachgereicht.\n- Keine doppelten Einträge: Speicherst du denselben Film am selben Tag erneut, wird der vorhandene Tagebucheintrag geändert.",
         "targetAbi": "12.4.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/derpfiff/jellyscribe-fork/main/dist/jellyscribe-fork_2.15.0.124.zip",
         "checksum": "f2e4bbbf9de688ae7db790795755a522",

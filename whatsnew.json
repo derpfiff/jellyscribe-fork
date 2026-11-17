@@ -1,5 +1,23 @@
 [
   {
+    "version": "2.15.0.128",
+    "date": "2026-11-17",
+    "admin": true,
+    "items": [
+      {
+        "icon": "bell",
+        "de": [
+          "Release Notes im Paket",
+          "Cinema Glass zeigt nach einem Update einmal, was neu ist."
+        ],
+        "en": [
+          "Release notes included",
+          "Cinema Glass shows once after an update what's new."
+        ]
+      }
+    ]
+  },
+  {
     "version": "2.15.0.127",
     "date": "2026-11-17",
     "admin": true,
@@ -13,6 +31,101 @@
         "en": [
           "Settings in English",
           "The settings and account pages now follow Jellyfin's language."
+        ]
+      }
+    ]
+  },
+  {
+    "version": "2.15.0.126",
+    "date": "2026-11-15",
+    "items": [
+      {
+        "icon": "star",
+        "de": [
+          "Deine Letterboxd-Bewertungen",
+          "Cinema Glass kennt jetzt auch Filme, die du auf Letterboxd bewertet, gelikt oder als gesehen markiert hast – auch ohne Tagebucheintrag."
+        ],
+        "en": [
+          "Your Letterboxd ratings",
+          "Cinema Glass now also knows films you rated, liked or marked as watched on Letterboxd – even without a diary entry."
+        ]
+      }
+    ]
+  },
+  {
+    "version": "2.15.0.125",
+    "date": "2026-11-15",
+    "items": [
+      {
+        "icon": "glass",
+        "de": [
+          "Im Look von Cinema Glass",
+          "Konto- und Einstellungsseite sind schlicht und passen zu Cinema Glass."
+        ],
+        "en": [
+          "Cinema Glass look",
+          "The account and settings pages are simpler and match Cinema Glass."
+        ]
+      },
+      {
+        "icon": "avatar",
+        "de": [
+          "Konto in Cinema Glass verbinden",
+          "Du meldest dich direkt in Cinema Glass bei Letterboxd an; eine falsche Anmeldung wird sofort gemeldet."
+        ],
+        "en": [
+          "Link your account in Cinema Glass",
+          "Sign in to Letterboxd right in Cinema Glass; a wrong login is reported straight away."
+        ]
+      },
+      {
+        "icon": "home",
+        "de": [
+          "Aufgeräumtes Menü",
+          "Kein eigener Eintrag mehr in Seitenleiste und Benutzermenü."
+        ],
+        "en": [
+          "Tidier menus",
+          "No extra entry in the sidebar and user menu any more."
+        ]
+      }
+    ]
+  },
+  {
+    "version": "2.15.0.124",
+    "date": "2026-11-15",
+    "items": [
+      {
+        "icon": "glass",
+        "de": [
+          "Fork für Jellyfin 12.4",
+          "Nichts wird mehr automatisch zu Letterboxd geschickt – ein Eintrag entsteht nur, wenn du im Bewertungsdialog von Cinema Glass auf „Speichern“ drückst."
+        ],
+        "en": [
+          "Fork for Jellyfin 12.4",
+          "Nothing is posted to Letterboxd automatically any more – an entry is only made when you press “Save” in Cinema Glass's rating dialog."
+        ]
+      },
+      {
+        "icon": "clock",
+        "de": [
+          "Warteschlange bei Ausfällen",
+          "Ist Letterboxd nicht erreichbar, wird dein Eintrag gemerkt und später nachgereicht."
+        ],
+        "en": [
+          "Queue when offline",
+          "If Letterboxd can't be reached, your entry is kept and sent later."
+        ]
+      },
+      {
+        "icon": "fix",
+        "de": [
+          "Keine doppelten Einträge",
+          "Speicherst du denselben Film am selben Tag erneut, wird der vorhandene Tagebucheintrag geändert."
+        ],
+        "en": [
+          "No duplicate entries",
+          "Saving the same film again on the same day updates the existing diary entry instead."
         ]
       }
     ]
